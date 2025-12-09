@@ -22,6 +22,12 @@ const Header = () => {
           >
             Signos
           </Link>
+          <Link
+            to="/mapa-astral"
+            className="font-body text-lg text-foreground/80 hover:text-primary transition-colors duration-300"
+          >
+            Mapa Astral
+          </Link>
           <a
             href="https://www.youtube.com/@HoroscopodaGabi"
             target="_blank"
