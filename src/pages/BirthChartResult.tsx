@@ -27,23 +27,27 @@ export default function BirthChartResult() {
       return;
     }
 
-    try {
-      const parsed = JSON.parse(storedData);
-      const birthData: BirthData = {
-        date: new Date(parsed.date),
-        time: parsed.time,
-        latitude: parsed.latitude,
-        longitude: parsed.longitude,
-        city: parsed.city,
-      };
-      
-      const calculated = calculateBirthChart(birthData);
-      setChartData(calculated);
-      setBirthInfo({ name: parsed.name, city: parsed.city });
-    } catch (error) {
-      console.error('Error calculating chart:', error);
-      navigate('/mapa-astral');
-    }
+    const calculateChart = async () => {
+      try {
+        const parsed = JSON.parse(storedData);
+        const birthData: BirthData = {
+          date: new Date(parsed.date),
+          time: parsed.time,
+          latitude: parsed.latitude,
+          longitude: parsed.longitude,
+          city: parsed.city,
+        };
+        
+        const calculated = await calculateBirthChart(birthData);
+        setChartData(calculated);
+        setBirthInfo({ name: parsed.name, city: parsed.city });
+      } catch (error) {
+        console.error('Error calculating chart:', error);
+        navigate('/mapa-astral');
+      }
+    };
+    
+    calculateChart();
   }, [navigate]);
 
   const handleDownload = async (type: 'wheel' | 'mandala') => {
