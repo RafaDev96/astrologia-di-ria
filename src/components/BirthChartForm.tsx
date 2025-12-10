@@ -5,25 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Star, MapPin, Calendar, Clock } from 'lucide-react';
-
-// Brazilian cities with coordinates
-const brazilianCities = [
-  { name: 'São Paulo, SP', lat: -23.5505, lng: -46.6333 },
-  { name: 'Rio de Janeiro, RJ', lat: -22.9068, lng: -43.1729 },
-  { name: 'Brasília, DF', lat: -15.7942, lng: -47.8825 },
-  { name: 'Salvador, BA', lat: -12.9714, lng: -38.5014 },
-  { name: 'Belo Horizonte, MG', lat: -19.9191, lng: -43.9386 },
-  { name: 'Fortaleza, CE', lat: -3.7172, lng: -38.5433 },
-  { name: 'Manaus, AM', lat: -3.1019, lng: -60.0250 },
-  { name: 'Curitiba, PR', lat: -25.4284, lng: -49.2733 },
-  { name: 'Recife, PE', lat: -8.0476, lng: -34.8770 },
-  { name: 'Porto Alegre, RS', lat: -30.0346, lng: -51.2177 },
-  { name: 'Belém, PA', lat: -1.4558, lng: -48.4902 },
-  { name: 'Goiânia, GO', lat: -16.6869, lng: -49.2648 },
-  { name: 'Guarulhos, SP', lat: -23.4538, lng: -46.5333 },
-  { name: 'Campinas, SP', lat: -22.9099, lng: -47.0626 },
-  { name: 'São Luís, MA', lat: -2.5307, lng: -44.3068 },
-];
+import { brazilianCities, BrazilianCity } from '@/data/brazilianCities';
 
 export default function BirthChartForm() {
   const navigate = useNavigate();
@@ -33,7 +15,7 @@ export default function BirthChartForm() {
     birthTime: '',
     city: '',
   });
-  const [filteredCities, setFilteredCities] = useState<typeof brazilianCities>([]);
+  const [filteredCities, setFilteredCities] = useState<BrazilianCity[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const handleCityChange = (value: string) => {
@@ -42,14 +24,14 @@ export default function BirthChartForm() {
       const filtered = brazilianCities.filter(city =>
         city.name.toLowerCase().includes(value.toLowerCase())
       );
-      setFilteredCities(filtered);
+      setFilteredCities(filtered.slice(0, 10)); // Limit to 10 suggestions
       setShowSuggestions(true);
     } else {
       setShowSuggestions(false);
     }
   };
 
-  const selectCity = (city: typeof brazilianCities[0]) => {
+  const selectCity = (city: BrazilianCity) => {
     setFormData({ ...formData, city: city.name });
     setShowSuggestions(false);
   };
