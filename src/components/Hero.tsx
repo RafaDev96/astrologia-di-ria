@@ -50,21 +50,29 @@ const Hero = () => {
           Descubra o que os astros reservam para você. Previsões diárias, semanais e mensais para todos os signos.
         </p>
 
-        <div className="flex flex-wrap items-center justify-center gap-4 animate-fade-in"
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-in"
              style={{ animationDelay: '0.6s' }}>
           <a
             href="#signos"
-            className="px-8 py-3 bg-primary text-primary-foreground font-display text-lg rounded-full glow-gold transition-all duration-300 hover:scale-105 hover:shadow-lg"
+            className="w-full sm:w-auto px-8 py-3 bg-primary text-primary-foreground font-display text-lg rounded-full glow-gold transition-all duration-300 hover:scale-105 hover:shadow-lg text-center"
           >
             Escolha seu Signo
           </a>
           <a
+            href="/mapa-astral"
+            className="w-full sm:w-auto px-8 py-3 bg-cosmic-purple text-white font-display text-lg rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:bg-cosmic-purple/90 text-center"
+          >
+            ✨ Mapa Astral Completo
+          </a>
+        </div>
+        <div className="mt-4 animate-fade-in" style={{ animationDelay: '0.8s' }}>
+          <a
             href="https://www.youtube.com/@HoroscopodaGabi"
             target="_blank"
             rel="noopener noreferrer"
-            className="px-8 py-3 border-gradient-gold text-foreground font-display text-lg rounded-full transition-all duration-300 hover:scale-105"
+            className="inline-flex items-center gap-2 text-foreground/70 hover:text-primary transition-colors"
           >
-            Assistir no YouTube
+            <span className="text-sm">Assistir no YouTube</span>
           </a>
         </div>
       </div>

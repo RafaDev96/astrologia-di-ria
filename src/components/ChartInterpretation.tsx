@@ -13,13 +13,30 @@ import {
   AccordionTrigger 
 } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 interface ChartInterpretationProps {
   chartData: ChartData;
+  userName?: string;
 }
 
-export default function ChartInterpretation({ chartData }: ChartInterpretationProps) {
+// Mensagens acolhedoras para cada seção
+const welcomeMessages = {
+  summary: "Estes são os pilares fundamentais do seu mapa astral. Eles revelam a essência de quem você é, como sente e como se apresenta ao mundo.",
+  elements: "Os elementos mostram qual energia predomina na sua vida. Cada elemento traz qualidades únicas que influenciam sua forma de ser e agir.",
+  planets: "Cada planeta representa uma parte diferente da sua personalidade e vida. Explore cada um para entender melhor suas tendências naturais.",
+  aspects: "Os aspectos são as conversas entre os planetas do seu mapa. Eles revelam talentos naturais e áreas que pedem mais atenção e crescimento.",
+  houses: "As casas representam diferentes áreas da sua vida. Descubra quais energias atuam em cada setor, desde relacionamentos até carreira."
+};
+
+const elementDescriptions = {
+  Fogo: "Energia, paixão, iniciativa e entusiasmo. Você tem uma natureza dinâmica e inspiradora.",
+  Terra: "Praticidade, estabilidade, persistência e conexão com o mundo material.",
+  Ar: "Comunicação, intelecto, sociabilidade e troca de ideias.",
+  Água: "Emoção, intuição, empatia e profundidade emocional."
+};
+
+export default function ChartInterpretation({ chartData, userName }: ChartInterpretationProps) {
   const getPlanetInfo = (planetName: string) => {
     return planetData.find(p => p.name === planetName);
   };
@@ -34,81 +51,140 @@ export default function ChartInterpretation({ chartData }: ChartInterpretationPr
   
   const getInterpretation = (planetId: string, sign: string) => {
     return planetInSignInterpretations[planetId]?.[sign] || 
-      `${sign} influencia esta área da sua vida de forma única.`;
+      `${sign} influencia esta área da sua vida de forma única e especial.`;
   };
 
   // Calculate element distribution
-  const elementCounts = { Fogo: 0, Terra: 0, Ar: 0, Água: 0 };
+  const elementCounts: Record<string, number> = { Fogo: 0, Terra: 0, Ar: 0, Água: 0 };
   chartData.planets.forEach(planet => {
     const element = signElements[planet.sign];
     if (element) elementCounts[element]++;
   });
 
+  // Find dominant element
+  const dominantElement = Object.entries(elementCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+
+  const sunSign = chartData.planets.find(p => p.planet === 'Sol')?.sign;
+  const moonSign = chartData.planets.find(p => p.planet === 'Lua')?.sign;
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Welcome Message */}
+      <Card className="bg-gradient-to-br from-primary/10 to-cosmic-purple/10 border-primary/30">
+        <CardHeader className="text-center">
+          <CardTitle className="font-display text-2xl md:text-3xl text-gradient-gold">
+            {userName ? `${userName}, ` : ''}Bem-vindo ao seu Mapa Astral! ✨
+          </CardTitle>
+          <CardDescription className="text-base text-foreground/80 mt-2">
+            Este é um momento especial de autoconhecimento. Seu mapa astral é único como você 
+            e revela padrões, talentos e possibilidades que estão escritos nas estrelas desde o 
+            momento do seu nascimento. Explore cada seção com curiosidade e carinho.
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Card className="bg-card/50 border-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Sol</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-display text-gradient-gold">
-              {chartData.planets.find(p => p.planet === 'Sol')?.sign}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Lua</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-display text-gradient-gold">
-              {chartData.planets.find(p => p.planet === 'Lua')?.sign}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Ascendente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-display text-gradient-gold">
-              {chartData.ascendant.sign}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="bg-card/50 border-primary/20">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-muted-foreground">Meio do Céu</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl font-display text-gradient-gold">
-              {chartData.midheaven.sign}
-            </p>
-          </CardContent>
-        </Card>
+      <div>
+        <div className="text-center mb-4">
+          <h3 className="font-display text-xl text-foreground mb-2">Sua Essência Astrológica</h3>
+          <p className="text-sm text-muted-foreground">{welcomeMessages.summary}</p>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="bg-card/50 border-primary/20 hover:border-primary/50 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                ☀️ Sol
+              </CardTitle>
+              <CardDescription className="text-xs">Sua identidade e ego</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl font-display text-gradient-gold">{sunSign}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Representa quem você realmente é no seu núcleo mais profundo.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/50 border-primary/20 hover:border-primary/50 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                🌙 Lua
+              </CardTitle>
+              <CardDescription className="text-xs">Suas emoções e instintos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl font-display text-gradient-gold">{moonSign}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Revela como você processa sentimentos e busca segurança.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/50 border-primary/20 hover:border-primary/50 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                ⬆️ Ascendente
+              </CardTitle>
+              <CardDescription className="text-xs">Sua máscara social</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl font-display text-gradient-gold">{chartData.ascendant.sign}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Como os outros te percebem na primeira impressão.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/50 border-primary/20 hover:border-primary/50 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                ⭐ Meio do Céu
+              </CardTitle>
+              <CardDescription className="text-xs">Carreira e propósito</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-xl font-display text-gradient-gold">{chartData.midheaven.sign}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Indica sua vocação e imagem pública ideal.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Element Distribution */}
       <Card className="bg-card/50 border-primary/20">
         <CardHeader>
           <CardTitle className="font-display text-foreground">Distribuição dos Elementos</CardTitle>
+          <CardDescription>{welcomeMessages.elements}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
             {Object.entries(elementCounts).map(([element, count]) => (
-              <div key={element} className="text-center">
-                <div className="text-2xl mb-1">
+              <div 
+                key={element} 
+                className={`text-center p-4 rounded-lg transition-all ${
+                  element === dominantElement 
+                    ? 'bg-primary/20 border border-primary/50 scale-105' 
+                    : 'bg-background/50'
+                }`}
+              >
+                <div className="text-3xl mb-2">
                   {element === 'Fogo' && '🔥'}
                   {element === 'Terra' && '🌍'}
                   {element === 'Ar' && '💨'}
                   {element === 'Água' && '💧'}
                 </div>
-                <p className="text-sm text-muted-foreground">{element}</p>
-                <p className="text-xl font-display text-primary">{count}</p>
+                <p className="text-sm font-medium text-foreground">{element}</p>
+                <p className="text-2xl font-display text-primary">{count}</p>
+                {element === dominantElement && (
+                  <Badge variant="default" className="mt-2 text-xs">Dominante</Badge>
+                )}
               </div>
             ))}
+          </div>
+          <div className="bg-background/50 p-4 rounded-lg mt-4">
+            <p className="text-sm text-foreground">
+              <strong className="text-primary">Seu elemento dominante é {dominantElement}:</strong>{' '}
+              {elementDescriptions[dominantElement as keyof typeof elementDescriptions]}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -117,6 +193,7 @@ export default function ChartInterpretation({ chartData }: ChartInterpretationPr
       <Card className="bg-card/50 border-primary/20">
         <CardHeader>
           <CardTitle className="font-display text-foreground">Posições Planetárias</CardTitle>
+          <CardDescription>{welcomeMessages.planets}</CardDescription>
         </CardHeader>
         <CardContent>
           <Accordion type="multiple" className="w-full">
@@ -127,14 +204,14 @@ export default function ChartInterpretation({ chartData }: ChartInterpretationPr
               const interpretation = getInterpretation(planetId, planet.sign);
               
               return (
-                <AccordionItem key={index} value={`planet-${index}`}>
-                  <AccordionTrigger className="hover:no-underline">
+                <AccordionItem key={index} value={`planet-${index}`} className="border-primary/10">
+                  <AccordionTrigger className="hover:no-underline hover:bg-primary/5 px-4 rounded-lg">
                     <div className="flex items-center gap-3 text-left">
                       <span className="text-2xl text-primary">{planetInfo?.symbol || '★'}</span>
                       <div>
                         <p className="font-display text-foreground">
                           {planet.planet} em {planet.sign}
-                          {planet.retrograde && <span className="text-destructive ml-2">(R)</span>}
+                          {planet.retrograde && <span className="text-orange-400 ml-2">℞</span>}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           Casa {planet.house} • {Math.round(planet.degree % 30)}°
@@ -142,25 +219,29 @@ export default function ChartInterpretation({ chartData }: ChartInterpretationPr
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-3 pl-10">
-                      <div>
-                        <p className="text-sm text-primary font-medium mb-1">Significado do Planeta:</p>
+                  <AccordionContent className="bg-background/30 rounded-lg mx-2 mb-2">
+                    <div className="space-y-4 p-4">
+                      <div className="bg-primary/5 p-3 rounded-lg">
+                        <p className="text-sm text-primary font-medium mb-1">💫 O que este planeta representa:</p>
                         <p className="text-muted-foreground text-sm">{planetInfo?.meaning}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-primary font-medium mb-1">Interpretação:</p>
+                      <div className="bg-cosmic-purple/10 p-3 rounded-lg">
+                        <p className="text-sm text-cosmic-purple font-medium mb-1">🌟 Sua interpretação pessoal:</p>
                         <p className="text-foreground">{interpretation}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-primary font-medium mb-1">Área de Vida ({houseInfo?.name}):</p>
+                      <div className="bg-background/50 p-3 rounded-lg">
+                        <p className="text-sm text-primary font-medium mb-1">🏠 Área de vida influenciada ({houseInfo?.name}):</p>
                         <p className="text-muted-foreground text-sm">{houseInfo?.meaning}</p>
                       </div>
                       {planet.retrograde && (
-                        <div>
-                          <Badge variant="destructive" className="text-xs">Retrógrado</Badge>
-                          <p className="text-muted-foreground text-sm mt-1">
-                            Este planeta pede revisão e introspecção nas áreas que governa.
+                        <div className="bg-orange-500/10 p-3 rounded-lg border border-orange-500/20">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant="outline" className="text-xs border-orange-500 text-orange-400">Retrógrado</Badge>
+                          </div>
+                          <p className="text-muted-foreground text-sm">
+                            Quando um planeta está retrógrado, sua energia se volta para dentro. 
+                            É um convite para revisar, refletir e reavaliar as áreas que ele governa. 
+                            Não é algo negativo, mas sim uma oportunidade de crescimento interior.
                           </p>
                         </div>
                       )}
@@ -177,34 +258,51 @@ export default function ChartInterpretation({ chartData }: ChartInterpretationPr
       <Card className="bg-card/50 border-primary/20">
         <CardHeader>
           <CardTitle className="font-display text-foreground">Aspectos Principais</CardTitle>
+          <CardDescription>{welcomeMessages.aspects}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
             {chartData.aspects.slice(0, 12).map((aspect, index) => {
               const aspectInfo = getAspectInfo(aspect.type);
+              const isHarmonious = aspectInfo?.nature === 'harmonious';
+              const isChallenging = aspectInfo?.nature === 'challenging';
+              
               return (
                 <div 
                   key={index} 
-                  className="flex items-center justify-between p-3 rounded-lg bg-background/50"
+                  className={`p-4 rounded-lg transition-all hover:scale-[1.01] ${
+                    isHarmonious ? 'bg-green-500/10 border border-green-500/20' :
+                    isChallenging ? 'bg-orange-500/10 border border-orange-500/20' :
+                    'bg-background/50 border border-border/50'
+                  }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-xl text-primary">{aspectInfo?.symbol}</span>
-                    <div>
-                      <p className="text-foreground">
-                        {aspect.planet1} {aspectInfo?.symbol} {aspect.planet2}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {aspect.type} • Orbe: {aspect.orb}°
-                      </p>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-3">
+                      <span className="text-xl text-primary">{aspectInfo?.symbol}</span>
+                      <div>
+                        <p className="text-foreground font-medium">
+                          {aspect.planet1} {aspectInfo?.symbol} {aspect.planet2}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {aspect.type} • Orbe: {aspect.orb}°
+                        </p>
+                      </div>
                     </div>
+                    <Badge 
+                      variant={isHarmonious ? 'default' : isChallenging ? 'destructive' : 'secondary'}
+                      className={isHarmonious ? 'bg-green-600' : ''}
+                    >
+                      {isHarmonious ? '✨ Harmônico' : isChallenging ? '🔥 Desafiador' : '⚖️ Neutro'}
+                    </Badge>
                   </div>
-                  <Badge 
-                    variant={aspectInfo?.nature === 'harmonious' ? 'default' : 
-                             aspectInfo?.nature === 'challenging' ? 'destructive' : 'secondary'}
-                  >
-                    {aspectInfo?.nature === 'harmonious' ? 'Harmônico' : 
-                     aspectInfo?.nature === 'challenging' ? 'Desafiador' : 'Neutro'}
-                  </Badge>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {isHarmonious 
+                      ? `Este aspecto traz facilidade e talentos naturais na conexão entre ${aspect.planet1} e ${aspect.planet2}.`
+                      : isChallenging
+                      ? `Este aspecto pede atenção e trabalho consciente. É através desses desafios que você mais cresce.`
+                      : `Este aspecto traz uma energia neutra que pode ser usada de diversas formas.`
+                    }
+                  </p>
                 </div>
               );
             })}
@@ -216,35 +314,36 @@ export default function ChartInterpretation({ chartData }: ChartInterpretationPr
       <Card className="bg-card/50 border-primary/20">
         <CardHeader>
           <CardTitle className="font-display text-foreground">Casas Astrológicas</CardTitle>
+          <CardDescription>{welcomeMessages.houses}</CardDescription>
         </CardHeader>
         <CardContent>
           <Accordion type="single" collapsible className="w-full">
             {houses.map((house, index) => {
               const cuspDegree = chartData.houses[index];
-              const cuspSign = chartData.planets.length > 0 
-                ? (() => {
-                    const deg = cuspDegree % 360;
-                    if (deg >= 0 && deg < 30) return 'Áries';
-                    if (deg >= 30 && deg < 60) return 'Touro';
-                    if (deg >= 60 && deg < 90) return 'Gêmeos';
-                    if (deg >= 90 && deg < 120) return 'Câncer';
-                    if (deg >= 120 && deg < 150) return 'Leão';
-                    if (deg >= 150 && deg < 180) return 'Virgem';
-                    if (deg >= 180 && deg < 210) return 'Libra';
-                    if (deg >= 210 && deg < 240) return 'Escorpião';
-                    if (deg >= 240 && deg < 270) return 'Sagitário';
-                    if (deg >= 270 && deg < 300) return 'Capricórnio';
-                    if (deg >= 300 && deg < 330) return 'Aquário';
-                    return 'Peixes';
-                  })()
-                : '';
+              const cuspSign = (() => {
+                const deg = cuspDegree % 360;
+                if (deg >= 0 && deg < 30) return 'Áries';
+                if (deg >= 30 && deg < 60) return 'Touro';
+                if (deg >= 60 && deg < 90) return 'Gêmeos';
+                if (deg >= 90 && deg < 120) return 'Câncer';
+                if (deg >= 120 && deg < 150) return 'Leão';
+                if (deg >= 150 && deg < 180) return 'Virgem';
+                if (deg >= 180 && deg < 210) return 'Libra';
+                if (deg >= 210 && deg < 240) return 'Escorpião';
+                if (deg >= 240 && deg < 270) return 'Sagitário';
+                if (deg >= 270 && deg < 300) return 'Capricórnio';
+                if (deg >= 300 && deg < 330) return 'Aquário';
+                return 'Peixes';
+              })();
               const planetsInHouse = chartData.planets.filter(p => p.house === house.number);
               
               return (
-                <AccordionItem key={house.number} value={`house-${house.number}`}>
-                  <AccordionTrigger className="hover:no-underline">
+                <AccordionItem key={house.number} value={`house-${house.number}`} className="border-primary/10">
+                  <AccordionTrigger className="hover:no-underline hover:bg-primary/5 px-4 rounded-lg">
                     <div className="flex items-center gap-3 text-left">
-                      <span className="text-xl text-primary font-display">{house.number}</span>
+                      <span className="w-8 h-8 flex items-center justify-center bg-primary/20 rounded-full text-primary font-display">
+                        {house.number}
+                      </span>
                       <div>
                         <p className="font-display text-foreground">{house.name}</p>
                         <p className="text-sm text-muted-foreground">
@@ -254,17 +353,38 @@ export default function ChartInterpretation({ chartData }: ChartInterpretationPr
                       </div>
                     </div>
                   </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-2 pl-10">
-                      <p className="text-foreground">{house.meaning}</p>
+                  <AccordionContent className="bg-background/30 rounded-lg mx-2 mb-2">
+                    <div className="space-y-3 p-4">
+                      <div className="bg-primary/5 p-3 rounded-lg">
+                        <p className="text-sm text-primary font-medium mb-1">📍 Esta casa representa:</p>
+                        <p className="text-foreground">{house.meaning}</p>
+                      </div>
+                      <div className="bg-background/50 p-3 rounded-lg">
+                        <p className="text-sm text-muted-foreground">
+                          <strong className="text-primary">Com a cúspide em {cuspSign}:</strong> A energia de {cuspSign} 
+                          colore como você vivencia e expressa os temas desta casa.
+                        </p>
+                      </div>
                       {planetsInHouse.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {planetsInHouse.map(p => (
-                            <Badge key={p.planet} variant="outline">
-                              {p.planet} em {p.sign}
-                            </Badge>
-                          ))}
+                        <div className="bg-cosmic-purple/10 p-3 rounded-lg">
+                          <p className="text-sm text-cosmic-purple font-medium mb-2">🌟 Planetas nesta casa:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {planetsInHouse.map(p => (
+                              <Badge key={p.planet} variant="outline" className="border-cosmic-purple/50">
+                                {p.planet} em {p.sign}
+                              </Badge>
+                            ))}
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Ter planetas em uma casa ativa fortemente seus temas na sua vida.
+                          </p>
                         </div>
+                      )}
+                      {planetsInHouse.length === 0 && (
+                        <p className="text-xs text-muted-foreground bg-background/50 p-2 rounded">
+                          💡 Não ter planetas em uma casa não significa que ela é menos importante. 
+                          O signo na cúspide ainda influencia como você vive esses temas.
+                        </p>
                       )}
                     </div>
                   </AccordionContent>
@@ -272,6 +392,17 @@ export default function ChartInterpretation({ chartData }: ChartInterpretationPr
               );
             })}
           </Accordion>
+        </CardContent>
+      </Card>
+
+      {/* Closing Message */}
+      <Card className="bg-gradient-to-br from-cosmic-purple/10 to-primary/10 border-primary/30">
+        <CardContent className="text-center py-6">
+          <p className="text-foreground/80">
+            ✨ Lembre-se: seu mapa astral mostra potenciais e tendências, não destinos fixos. 
+            Você sempre tem o livre arbítrio para fazer escolhas e crescer. Use estas informações 
+            como um guia amoroso para se conhecer melhor e florescer em sua jornada única.
+          </p>
         </CardContent>
       </Card>
     </div>
