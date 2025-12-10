@@ -180,7 +180,7 @@ export default function BirthChartResult() {
               </TabsList>
 
               <TabsContent value="interpretation">
-                <ChartInterpretation chartData={chartData} />
+                <ChartInterpretation chartData={chartData} userName={birthInfo.name} />
               </TabsContent>
 
               <TabsContent value="wheel">
