@@ -1,4 +1,5 @@
 import { Star, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroBg from "@/assets/hero-bg.jpg";
 
 const Hero = () => {
@@ -58,12 +59,12 @@ const Hero = () => {
           >
             Escolha seu Signo
           </a>
-          <a
-            href="/mapa-astral"
+          <Link
+            to="/mapa-astral"
             className="w-full sm:w-auto px-6 py-3 bg-cosmic-purple text-white font-display text-base rounded-full transition-all duration-300 hover:scale-105 hover:shadow-lg hover:bg-cosmic-purple/90 text-center"
           >
             ✨ Mapa Astral
-          </a>
+          </Link>
           <a
             href="https://www.youtube.com/@HoroscopodaGabi"
             target="_blank"
