@@ -92,33 +92,48 @@ function calculateAscendant(jd: number, latitude: number, longitude: number): nu
   const lstRad = lst * Math.PI / 180;
   const latRad = latitude * Math.PI / 180;
   
-  // Obliquity of the ecliptic
+  // Obliquity of the ecliptic (mean obliquity)
   const T = (jd - 2451545.0) / 36525;
-  const obliquity = 23.439291 - 0.0130042 * T;
+  const obliquity = 23.439291 - 0.0130042 * T - 0.00000016 * T * T + 0.000000504 * T * T * T;
   const oblRad = obliquity * Math.PI / 180;
   
-  // Calculate Ascendant
-  const y = -Math.cos(lstRad);
-  const x = Math.sin(oblRad) * Math.tan(latRad) + Math.cos(oblRad) * Math.sin(lstRad);
+  // Calculate Ascendant using the correct formula
+  // ASC = atan2(-cos(RAMC), sin(RAMC)*cos(e) + tan(lat)*sin(e))
+  const tanLat = Math.tan(latRad);
+  const sinObl = Math.sin(oblRad);
+  const cosObl = Math.cos(oblRad);
+  const sinRAMC = Math.sin(lstRad);
+  const cosRAMC = Math.cos(lstRad);
   
-  let asc = Math.atan2(y, x) * 180 / Math.PI;
+  let asc = Math.atan2(-cosRAMC, sinRAMC * cosObl + tanLat * sinObl) * 180 / Math.PI;
+  
+  // Normalize to 0-360
   asc = ((asc % 360) + 360) % 360;
   
   return asc;
 }
 
-// Calculate Midheaven (MC)
+// Calculate Midheaven (MC) - the point where the ecliptic crosses the meridian
 function calculateMidheaven(jd: number, longitude: number): number {
   const lst = getLocalSiderealTime(jd, longitude);
   const lstRad = lst * Math.PI / 180;
   
   // Obliquity of the ecliptic
   const T = (jd - 2451545.0) / 36525;
-  const obliquity = 23.439291 - 0.0130042 * T;
+  const obliquity = 23.439291 - 0.0130042 * T - 0.00000016 * T * T + 0.000000504 * T * T * T;
   const oblRad = obliquity * Math.PI / 180;
   
-  // Calculate MC
-  let mc = Math.atan2(Math.sin(lstRad), Math.cos(lstRad) * Math.cos(oblRad)) * 180 / Math.PI;
+  // Calculate MC: MC = atan(tan(RAMC) / cos(e))
+  let mc = Math.atan2(Math.tan(lstRad), Math.cos(oblRad)) * 180 / Math.PI;
+  
+  // Adjust quadrant based on LST
+  if (lst >= 180) {
+    mc += 180;
+  }
+  if (mc < 0) {
+    mc += 360;
+  }
+  
   mc = ((mc % 360) + 360) % 360;
   
   return mc;
@@ -242,14 +257,21 @@ function calculateLunarNodes(jd: number): { north: number; south: number } {
 export async function calculateBirthChart(birthData: BirthData): Promise<ChartData> {
   const [hours, minutes] = birthData.time.split(':').map(Number);
   
-  // Create date in UTC (Brazil is UTC-3)
+  // Create date in UTC
+  // Brazil timezone offset: -3 hours (most regions)
+  // To convert local time to UTC: add the offset (which is negative, so we subtract)
   const dateTime = new Date(birthData.date);
-  dateTime.setHours(hours + 3, minutes, 0, 0); // Convert to UTC
+  const year = dateTime.getFullYear();
+  const month = dateTime.getMonth();
+  const day = dateTime.getDate();
   
-  const jd = getJulianDay(dateTime);
+  // Create UTC date: local time + 3 hours = UTC (because BR is UTC-3)
+  const utcDate = new Date(Date.UTC(year, month, day, hours + 3, minutes, 0, 0));
+  
+  const jd = getJulianDay(utcDate);
   
   // Create time of interest for astronomy-bundle
-  const toi = createTimeOfInterest.fromDate(dateTime);
+  const toi = createTimeOfInterest.fromDate(utcDate);
   
   // Calculate planetary positions using astronomy-bundle
   const planetPromises = [
