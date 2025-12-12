@@ -30,8 +30,14 @@ export default function BirthChartResult() {
     const calculateChart = async () => {
       try {
         const parsed = JSON.parse(storedData);
+        
+        // Parse date correctly without timezone issues
+        // The date comes as "YYYY-MM-DD" string from input type="date"
+        const [year, month, day] = parsed.date.split('-').map(Number);
+        const birthDate = new Date(year, month - 1, day); // month is 0-indexed
+        
         const birthData: BirthData = {
-          date: new Date(parsed.date),
+          date: birthDate,
           time: parsed.time,
           latitude: parsed.latitude,
           longitude: parsed.longitude,
