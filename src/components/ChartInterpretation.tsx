@@ -89,19 +89,16 @@ export default function ChartInterpretation({ chartData, userName }: ChartInterp
           <h3 className="font-display text-xl text-foreground mb-2">Sua Essência Astrológica</h3>
           <p className="text-sm text-muted-foreground">{welcomeMessages.summary}</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card className="bg-card/50 border-primary/20 hover:border-primary/50 transition-colors">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
                 ☀️ Sol
               </CardTitle>
-              <CardDescription className="text-xs">Sua identidade e ego</CardDescription>
+              <CardDescription className="text-xs">Identidade</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-xl font-display text-gradient-gold">{sunSign}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Representa quem você realmente é no seu núcleo mais profundo.
-              </p>
+              <p className="text-lg font-display text-gradient-gold">{sunSign}</p>
             </CardContent>
           </Card>
           <Card className="bg-card/50 border-primary/20 hover:border-primary/50 transition-colors">
@@ -109,13 +106,10 @@ export default function ChartInterpretation({ chartData, userName }: ChartInterp
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
                 🌙 Lua
               </CardTitle>
-              <CardDescription className="text-xs">Suas emoções e instintos</CardDescription>
+              <CardDescription className="text-xs">Emoções</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-xl font-display text-gradient-gold">{moonSign}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Revela como você processa sentimentos e busca segurança.
-              </p>
+              <p className="text-lg font-display text-gradient-gold">{moonSign}</p>
             </CardContent>
           </Card>
           <Card className="bg-card/50 border-primary/20 hover:border-primary/50 transition-colors">
@@ -123,12 +117,12 @@ export default function ChartInterpretation({ chartData, userName }: ChartInterp
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
                 ⬆️ Ascendente
               </CardTitle>
-              <CardDescription className="text-xs">Sua máscara social</CardDescription>
+              <CardDescription className="text-xs">Personalidade</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-xl font-display text-gradient-gold">{chartData.ascendant.sign}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Como os outros te percebem na primeira impressão.
+              <p className="text-lg font-display text-gradient-gold">{chartData.ascendant.sign}</p>
+              <p className="text-xs text-muted-foreground">
+                {Math.floor(chartData.ascendant.degreeInSign || 0)}°{Math.floor(((chartData.ascendant.degreeInSign || 0) % 1) * 60)}'
               </p>
             </CardContent>
           </Card>
@@ -137,12 +131,40 @@ export default function ChartInterpretation({ chartData, userName }: ChartInterp
               <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
                 ⭐ Meio do Céu
               </CardTitle>
-              <CardDescription className="text-xs">Carreira e propósito</CardDescription>
+              <CardDescription className="text-xs">Carreira</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-xl font-display text-gradient-gold">{chartData.midheaven.sign}</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Indica sua vocação e imagem pública ideal.
+              <p className="text-lg font-display text-gradient-gold">{chartData.midheaven.sign}</p>
+              <p className="text-xs text-muted-foreground">
+                {Math.floor(chartData.midheaven.degreeInSign || 0)}°{Math.floor(((chartData.midheaven.degreeInSign || 0) % 1) * 60)}'
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/50 border-primary/20 hover:border-primary/50 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                ⬇️ Descendente
+              </CardTitle>
+              <CardDescription className="text-xs">Parcerias</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg font-display text-gradient-gold">{chartData.descendant?.sign || '-'}</p>
+              <p className="text-xs text-muted-foreground">
+                {Math.floor(chartData.descendant?.degreeInSign || 0)}°{Math.floor(((chartData.descendant?.degreeInSign || 0) % 1) * 60)}'
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="bg-card/50 border-primary/20 hover:border-primary/50 transition-colors">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm text-muted-foreground flex items-center gap-2">
+                🌑 Fundo do Céu
+              </CardTitle>
+              <CardDescription className="text-xs">Raízes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-lg font-display text-gradient-gold">{chartData.imumCoeli?.sign || '-'}</p>
+              <p className="text-xs text-muted-foreground">
+                {Math.floor(chartData.imumCoeli?.degreeInSign || 0)}°{Math.floor(((chartData.imumCoeli?.degreeInSign || 0) % 1) * 60)}'
               </p>
             </CardContent>
           </Card>
@@ -214,7 +236,7 @@ export default function ChartInterpretation({ chartData, userName }: ChartInterp
                           {planet.retrograde && <span className="text-orange-400 ml-2">℞</span>}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          Casa {planet.house} • {Math.round(planet.degree % 30)}°
+                          Casa {planet.house} • {Math.floor(planet.degreeInSign || planet.degree % 30)}°{Math.floor(((planet.degreeInSign || planet.degree % 30) % 1) * 60)}'
                         </p>
                       </div>
                     </div>
