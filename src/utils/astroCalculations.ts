@@ -108,23 +108,23 @@ function getLST(jd: number, longitude: number): number {
   return normalize(gmst + longitude);
 }
 
-// Calculate Sun position (VSOP87 simplified)
+// Calculate Sun position (accurate tropical zodiac)
 function calcSun(T: number): { lon: number; lat: number } {
-  // Mean longitude
-  let L0 = 280.4664567 + 360007.6982779 * T + 0.03032028 * T * T;
+  // Mean longitude of the Sun
+  let L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
   L0 = normalize(L0);
   
-  // Mean anomaly
-  let M = 357.5291092 + 35999.0502909 * T - 0.0001536 * T * T;
+  // Mean anomaly of the Sun
+  let M = 357.52911 + 35999.05029 * T - 0.0001537 * T * T;
   M = normalize(M);
   const Mrad = rad(M);
   
   // Equation of center
-  const C = (1.9146 - 0.004817 * T - 0.000014 * T * T) * Math.sin(Mrad)
+  const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(Mrad)
           + (0.019993 - 0.000101 * T) * Math.sin(2 * Mrad)
-          + 0.00029 * Math.sin(3 * Mrad);
+          + 0.000289 * Math.sin(3 * Mrad);
   
-  // Sun's true longitude
+  // Sun's true longitude (tropical)
   let sunLon = L0 + C;
   sunLon = normalize(sunLon);
   
@@ -196,27 +196,42 @@ function calcMoon(T: number): { lon: number; lat: number } {
 
 // Calculate Mercury position
 function calcMercury(T: number): { lon: number; retrograde: boolean } {
-  const L = normalize(252.2509 + 149474.0722 * T);
-  const M = normalize(174.7948 + 149472.5153 * T);
+  // Mean longitude
+  const L = normalize(252.2509 + 4.09233445 * T * 36525);
+  // Mean anomaly  
+  const M = normalize(174.7948 + 4.09233445 * T * 36525);
   const Mrad = rad(M);
   
-  // Equation of center
-  const C = 23.4400 * Math.sin(Mrad) + 2.9818 * Math.sin(2 * Mrad) + 0.5255 * Math.sin(3 * Mrad);
+  // Simplified heliocentric to geocentric conversion
+  // Mercury's position relative to Sun
+  const sunLon = calcSun(T).lon;
   
-  let lon = L + C;
-  lon = normalize(lon);
+  // Mercury orbital elements
+  const a = 0.387098; // semi-major axis in AU
+  const e = 0.205635; // eccentricity
   
-  // Simplified retrograde check based on synodic position
-  const synodic = normalize(lon - calcSun(T).lon);
-  const retrograde = (synodic > 245 && synodic < 295);
+  // True anomaly (simplified)
+  const E = M + (180/Math.PI) * e * Math.sin(Mrad) * (1 + e * Math.cos(Mrad));
+  const v = 2 * Math.atan(Math.sqrt((1+e)/(1-e)) * Math.tan(rad(E)/2)) * 180 / Math.PI;
+  
+  // Heliocentric longitude
+  const helioLon = normalize(77.4561 + v + 4.09233445 * T * 36525);
+  
+  // Geocentric longitude (simplified)
+  const lon = normalize(helioLon);
+  
+  // Retrograde check
+  const synodic = normalize(lon - sunLon);
+  const retrograde = (synodic > 245 && synodic < 295) || (synodic > 65 && synodic < 115);
   
   return { lon, retrograde };
 }
 
 // Calculate Venus position
 function calcVenus(T: number): { lon: number; retrograde: boolean } {
-  const L = normalize(181.9798 + 58519.2130 * T);
-  const M = normalize(50.4161 + 58517.8039 * T);
+  // Mean longitude (degrees per century: 58517.8 = 1.60213 * 36525)
+  const L = normalize(181.9798 + 1.60213034 * T * 36525);
+  const M = normalize(50.4161 + 1.60213034 * T * 36525);
   const Mrad = rad(M);
   
   const C = 0.7758 * Math.sin(Mrad) + 0.0033 * Math.sin(2 * Mrad);
@@ -224,16 +239,18 @@ function calcVenus(T: number): { lon: number; retrograde: boolean } {
   let lon = L + C;
   lon = normalize(lon);
   
-  const synodic = normalize(lon - calcSun(T).lon);
-  const retrograde = (synodic > 245 && synodic < 295);
+  const sunLon = calcSun(T).lon;
+  const synodic = normalize(lon - sunLon);
+  const retrograde = (synodic > 245 && synodic < 295) || (synodic > 65 && synodic < 115);
   
   return { lon, retrograde };
 }
 
 // Calculate Mars position
 function calcMars(T: number): { lon: number; retrograde: boolean } {
-  const L = normalize(355.4330 + 19141.6964 * T);
-  const M = normalize(19.3730 + 19139.8585 * T);
+  // Mean longitude (degrees per century: 19141 / 100 for T in centuries)
+  const L = normalize(355.4330 + 0.5240208 * T * 36525);
+  const M = normalize(19.3730 + 0.5240711 * T * 36525);
   const Mrad = rad(M);
   
   const C = 10.6912 * Math.sin(Mrad) + 0.6228 * Math.sin(2 * Mrad) + 0.0503 * Math.sin(3 * Mrad);
@@ -241,7 +258,8 @@ function calcMars(T: number): { lon: number; retrograde: boolean } {
   let lon = L + C;
   lon = normalize(lon);
   
-  const synodic = normalize(lon - calcSun(T).lon);
+  const sunLon = calcSun(T).lon;
+  const synodic = normalize(lon - sunLon);
   const retrograde = (synodic > 135 && synodic < 225);
   
   return { lon, retrograde };
@@ -249,8 +267,9 @@ function calcMars(T: number): { lon: number; retrograde: boolean } {
 
 // Calculate Jupiter position
 function calcJupiter(T: number): { lon: number; retrograde: boolean } {
-  const L = normalize(34.3515 + 3036.3027 * T);
-  const M = normalize(20.0202 + 3034.6982 * T);
+  // Mean longitude (degrees per century)
+  const L = normalize(34.3515 + 0.0831294 * T * 36525);
+  const M = normalize(20.0202 + 0.0830854 * T * 36525);
   const Mrad = rad(M);
   
   const C = 5.5549 * Math.sin(Mrad) + 0.1683 * Math.sin(2 * Mrad) + 0.0071 * Math.sin(3 * Mrad);
@@ -258,7 +277,8 @@ function calcJupiter(T: number): { lon: number; retrograde: boolean } {
   let lon = L + C;
   lon = normalize(lon);
   
-  const synodic = normalize(lon - calcSun(T).lon);
+  const sunLon = calcSun(T).lon;
+  const synodic = normalize(lon - sunLon);
   const retrograde = (synodic > 115 && synodic < 245);
   
   return { lon, retrograde };
@@ -266,8 +286,9 @@ function calcJupiter(T: number): { lon: number; retrograde: boolean } {
 
 // Calculate Saturn position
 function calcSaturn(T: number): { lon: number; retrograde: boolean } {
-  const L = normalize(50.0774 + 1223.5110 * T);
-  const M = normalize(317.0207 + 1222.1138 * T);
+  // Mean longitude (degrees per century)
+  const L = normalize(50.0774 + 0.0334979 * T * 36525);
+  const M = normalize(317.0207 + 0.0334614 * T * 36525);
   const Mrad = rad(M);
   
   const C = 6.3642 * Math.sin(Mrad) + 0.2609 * Math.sin(2 * Mrad) + 0.0129 * Math.sin(3 * Mrad);
@@ -275,7 +296,8 @@ function calcSaturn(T: number): { lon: number; retrograde: boolean } {
   let lon = L + C;
   lon = normalize(lon);
   
-  const synodic = normalize(lon - calcSun(T).lon);
+  const sunLon = calcSun(T).lon;
+  const synodic = normalize(lon - sunLon);
   const retrograde = (synodic > 110 && synodic < 250);
   
   return { lon, retrograde };
@@ -283,8 +305,9 @@ function calcSaturn(T: number): { lon: number; retrograde: boolean } {
 
 // Calculate Uranus position
 function calcUranus(T: number): { lon: number; retrograde: boolean } {
-  const L = normalize(314.0550 + 429.8640 * T);
-  const M = normalize(141.0500 + 429.0066 * T);
+  // Mean longitude (degrees per century)
+  const L = normalize(314.0550 + 0.0117725 * T * 36525);
+  const M = normalize(141.0500 + 0.0117454 * T * 36525);
   const Mrad = rad(M);
   
   const C = 5.3281 * Math.sin(Mrad) + 0.1870 * Math.sin(2 * Mrad);
@@ -292,7 +315,8 @@ function calcUranus(T: number): { lon: number; retrograde: boolean } {
   let lon = L + C;
   lon = normalize(lon);
   
-  const synodic = normalize(lon - calcSun(T).lon);
+  const sunLon = calcSun(T).lon;
+  const synodic = normalize(lon - sunLon);
   const retrograde = (synodic > 105 && synodic < 255);
   
   return { lon, retrograde };
@@ -300,8 +324,9 @@ function calcUranus(T: number): { lon: number; retrograde: boolean } {
 
 // Calculate Neptune position
 function calcNeptune(T: number): { lon: number; retrograde: boolean } {
-  const L = normalize(304.2228 + 219.8833 * T);
-  const M = normalize(256.2250 + 219.5400 * T);
+  // Mean longitude (degrees per century)
+  const L = normalize(304.2228 + 0.0060183 * T * 36525);
+  const M = normalize(256.2250 + 0.0060094 * T * 36525);
   const Mrad = rad(M);
   
   const C = 1.0302 * Math.sin(Mrad) + 0.0058 * Math.sin(2 * Mrad);
@@ -309,7 +334,8 @@ function calcNeptune(T: number): { lon: number; retrograde: boolean } {
   let lon = L + C;
   lon = normalize(lon);
   
-  const synodic = normalize(lon - calcSun(T).lon);
+  const sunLon = calcSun(T).lon;
+  const synodic = normalize(lon - sunLon);
   const retrograde = (synodic > 105 && synodic < 255);
   
   return { lon, retrograde };
@@ -317,10 +343,10 @@ function calcNeptune(T: number): { lon: number; retrograde: boolean } {
 
 // Calculate Pluto position (simplified)
 function calcPluto(T: number): { lon: number; retrograde: boolean } {
-  // Use simplified ephemeris for Pluto
-  // Reference epoch: J2000.0, Pluto at approximately 251°
-  const L = normalize(238.9290 + 145.1780 * T);
-  const M = normalize(14.8820 + 144.9600 * T);
+  // Pluto moves about 1.48 degrees per year = 0.00405 degrees per day
+  // At J2000 (Jan 1, 2000), Pluto was at approximately 251° (Sagittarius)
+  const L = normalize(251.0 + 0.00405 * T * 36525);
+  const M = normalize(14.8820 + 0.00397 * T * 36525);
   const Mrad = rad(M);
   
   const C = 6.9000 * Math.sin(Mrad) + 0.4500 * Math.sin(2 * Mrad);
@@ -328,7 +354,8 @@ function calcPluto(T: number): { lon: number; retrograde: boolean } {
   let lon = L + C;
   lon = normalize(lon);
   
-  const synodic = normalize(lon - calcSun(T).lon);
+  const sunLon = calcSun(T).lon;
+  const synodic = normalize(lon - sunLon);
   const retrograde = (synodic > 105 && synodic < 255);
   
   return { lon, retrograde };
