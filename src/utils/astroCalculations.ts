@@ -118,7 +118,7 @@ function getObliquity(T: number): number {
   return eps0 / 3600;
 }
 
-// Calculate Ascendant using precise formula
+// Calculate Ascendant using precise classical formula with proper quadrant correction
 function calculateAscendant(jd: number, latitude: number, longitude: number): number {
   const lst = getLST(jd, longitude);
   const lstRad = rad(lst);
@@ -128,12 +128,33 @@ function calculateAscendant(jd: number, latitude: number, longitude: number): nu
   const obliquity = getObliquity(T);
   const oblRad = rad(obliquity);
   
-  // Correct formula: ASC = atan2(-cos(RAMC), sin(RAMC)*cos(e) + tan(lat)*sin(e))
-  const y = Math.cos(lstRad);
-  const x = -(Math.sin(lstRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad));
+  // Classical formula: ASC = atan(-cos(RAMC) / (sin(RAMC)*cos(e) + tan(lat)*sin(e)))
+  const numerator = -Math.cos(lstRad);
+  const denominator = Math.sin(lstRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad);
   
-  let asc = deg(Math.atan2(y, x));
+  let asc = deg(Math.atan2(numerator, denominator));
+  
+  // The Ascendant must be in the eastern half of the chart
+  // When LST is 0-180, ASC should be 90-270
+  // When LST is 180-360, ASC should be 270-90 (through 0/360)
+  
+  // Normalize first
   asc = normalize(asc);
+  
+  // Quadrant correction: ASC should be opposite to RAMC roughly
+  // If LST (RAMC) is in Q1 (0-90), ASC should be around 90-180
+  // If LST (RAMC) is in Q2 (90-180), ASC should be around 180-270
+  // If LST (RAMC) is in Q3 (180-270), ASC should be around 270-360
+  // If LST (RAMC) is in Q4 (270-360), ASC should be around 0-90
+  
+  // Simple check: ASC should be roughly 90° ahead of LST (within 180°)
+  const expectedAscMidpoint = normalize(lst + 90);
+  const diff = Math.abs(normalize(asc - expectedAscMidpoint));
+  
+  // If ASC is more than 90° away from expected midpoint, add 180°
+  if (diff > 90 && diff < 270) {
+    asc = normalize(asc + 180);
+  }
   
   return asc;
 }
