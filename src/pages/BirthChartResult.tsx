@@ -1,24 +1,29 @@
 import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import ZodiacWheel from '@/components/ZodiacWheel';
 import ArtisticMandala from '@/components/ArtisticMandala';
 import ChartInterpretation from '@/components/ChartInterpretation';
+import FreeChartInterpretation from '@/components/FreeChartInterpretation';
 import { calculateBirthChart, ChartData, BirthData } from '@/utils/astroCalculations';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Share2, Star, RotateCcw } from 'lucide-react';
+import { Download, Share2, Star, RotateCcw, Lock } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 
 export default function BirthChartResult() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [birthInfo, setBirthInfo] = useState<{ name: string; city: string } | null>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
   const mandalaRef = useRef<HTMLDivElement>(null);
+
+  // Check if user has paid (via URL param for manual confirmation)
+  const isPaid = searchParams.get('acesso') === 'completo';
 
   useEffect(() => {
     const storedData = sessionStorage.getItem('birthChartData');
@@ -32,9 +37,8 @@ export default function BirthChartResult() {
         const parsed = JSON.parse(storedData);
         
         // Parse date correctly without timezone issues
-        // The date comes as "YYYY-MM-DD" string from input type="date"
         const [year, month, day] = parsed.date.split('-').map(Number);
-        const birthDate = new Date(year, month - 1, day); // month is 0-indexed
+        const birthDate = new Date(year, month - 1, day);
         
         const birthData: BirthData = {
           date: birthDate,
@@ -57,6 +61,12 @@ export default function BirthChartResult() {
   }, [navigate]);
 
   const handleDownload = async (type: 'wheel' | 'mandala') => {
+    if (!isPaid) {
+      toast.error('Desbloqueie o mapa completo para baixar as imagens');
+      navigate('/mapa-astral/pagamento');
+      return;
+    }
+    
     const ref = type === 'wheel' ? wheelRef : mandalaRef;
     if (!ref.current) return;
     
@@ -144,7 +154,9 @@ export default function BirthChartResult() {
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 mb-4">
                 <Star className="w-6 h-6 text-primary animate-pulse-glow" />
-                <span className="text-primary font-display text-lg">Mapa Astral</span>
+                <span className="text-primary font-display text-lg">
+                  {isPaid ? 'Mapa Astral Completo' : 'Amostra do Mapa Astral'}
+                </span>
                 <Star className="w-6 h-6 text-primary animate-pulse-glow" />
               </div>
               <h1 className="text-3xl md:text-5xl font-display text-gradient-gold mb-4">
@@ -155,7 +167,7 @@ export default function BirthChartResult() {
               </p>
               
               {/* Action buttons */}
-              <div className="flex justify-center gap-4 mt-6">
+              <div className="flex justify-center gap-4 mt-6 flex-wrap">
                 <Button 
                   variant="outline" 
                   onClick={() => navigate('/mapa-astral')}
@@ -172,40 +184,57 @@ export default function BirthChartResult() {
                   <Share2 className="w-4 h-4 mr-2" />
                   Compartilhar
                 </Button>
+                {!isPaid && (
+                  <Button 
+                    onClick={() => navigate('/mapa-astral/pagamento')}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    Desbloquear Completo
+                  </Button>
+                )}
               </div>
             </div>
 
             {/* Charts */}
             <Tabs defaultValue="interpretation" className="space-y-8">
-              <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3 bg-card/50">
+              <TabsList className={`grid w-full max-w-lg mx-auto ${isPaid ? 'grid-cols-3' : 'grid-cols-2'} bg-card/50`}>
                 <TabsTrigger value="interpretation" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   Interpretação
                 </TabsTrigger>
                 <TabsTrigger value="wheel" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
                   Roda Zodiacal
                 </TabsTrigger>
-                <TabsTrigger value="mandala" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-                  Mandala
-                </TabsTrigger>
+                {isPaid && (
+                  <TabsTrigger value="mandala" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                    Mandala
+                  </TabsTrigger>
+                )}
               </TabsList>
 
               <TabsContent value="interpretation">
-                <ChartInterpretation chartData={chartData} userName={birthInfo.name} />
+                {isPaid ? (
+                  <ChartInterpretation chartData={chartData} userName={birthInfo.name} />
+                ) : (
+                  <FreeChartInterpretation chartData={chartData} userName={birthInfo.name} />
+                )}
               </TabsContent>
 
               <TabsContent value="wheel">
                 <Card className="bg-card/50 border-primary/20">
                   <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="font-display text-foreground">Roda Zodiacal</CardTitle>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleDownload('wheel')}
-                      className="border-primary/30 hover:bg-primary/10"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Baixar
-                    </Button>
+                    {isPaid && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDownload('wheel')}
+                        className="border-primary/30 hover:bg-primary/10"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Baixar
+                      </Button>
+                    )}
                   </CardHeader>
                   <CardContent className="flex justify-center">
                     <div ref={wheelRef}>
@@ -215,31 +244,33 @@ export default function BirthChartResult() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="mandala">
-                <Card className="bg-card/50 border-primary/20">
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <CardTitle className="font-display text-foreground">Mandala Artística</CardTitle>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleDownload('mandala')}
-                      className="border-primary/30 hover:bg-primary/10"
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Baixar
-                    </Button>
-                  </CardHeader>
-                  <CardContent className="flex justify-center">
-                    <div ref={mandalaRef}>
-                      <ArtisticMandala chartData={chartData} />
-                    </div>
-                  </CardContent>
-                </Card>
-                <p className="text-center text-muted-foreground text-sm mt-4">
-                  Esta mandala é única e foi gerada com base nas posições do seu mapa astral.
-                  Os símbolos iluminados representam os signos onde você possui planetas.
-                </p>
-              </TabsContent>
+              {isPaid && (
+                <TabsContent value="mandala">
+                  <Card className="bg-card/50 border-primary/20">
+                    <CardHeader className="flex flex-row items-center justify-between">
+                      <CardTitle className="font-display text-foreground">Mandala Artística</CardTitle>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => handleDownload('mandala')}
+                        className="border-primary/30 hover:bg-primary/10"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Baixar
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="flex justify-center">
+                      <div ref={mandalaRef}>
+                        <ArtisticMandala chartData={chartData} />
+                      </div>
+                    </CardContent>
+                  </Card>
+                  <p className="text-center text-muted-foreground text-sm mt-4">
+                    Esta mandala é única e foi gerada com base nas posições do seu mapa astral.
+                    Os símbolos iluminados representam os signos onde você possui planetas.
+                  </p>
+                </TabsContent>
+              )}
             </Tabs>
           </div>
         </main>
