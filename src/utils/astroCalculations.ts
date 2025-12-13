@@ -128,8 +128,9 @@ function calculateAscendant(jd: number, latitude: number, longitude: number): nu
   const obliquity = getObliquity(T);
   const oblRad = rad(obliquity);
   
-  const y = -Math.cos(lstRad);
-  const x = Math.sin(lstRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad);
+  // Correct formula: ASC = atan2(-cos(RAMC), sin(RAMC)*cos(e) + tan(lat)*sin(e))
+  const y = Math.cos(lstRad);
+  const x = -(Math.sin(lstRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad));
   
   let asc = deg(Math.atan2(y, x));
   asc = normalize(asc);
