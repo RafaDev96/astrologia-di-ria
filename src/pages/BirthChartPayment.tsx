@@ -11,7 +11,7 @@ import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 
 const PIX_KEY = 'suachavepix@email.com'; // Substituir pela chave PIX real
-const WHATSAPP_NUMBER = '55519822905949'; // Substituir pelo número real
+const WHATSAPP_NUMBER = '5551982290594'; // Substituir pelo número real
 
 export default function BirthChartPayment() {
   const navigate = useNavigate();
