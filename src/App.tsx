@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import SignDetail from "./pages/SignDetail";
 import BirthChart from "./pages/BirthChart";
 import BirthChartResult from "./pages/BirthChartResult";
+import BirthChartPayment from "./pages/BirthChartPayment";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
             <Route path="/signo/:signId" element={<SignDetail />} />
             <Route path="/mapa-astral" element={<BirthChart />} />
             <Route path="/mapa-astral/resultado" element={<BirthChartResult />} />
+            <Route path="/mapa-astral/pagamento" element={<BirthChartPayment />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
