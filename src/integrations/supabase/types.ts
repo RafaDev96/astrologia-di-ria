@@ -14,7 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      checkout_sessions: {
+        Row: {
+          birth_data: Json
+          created_at: string
+          email: string
+          id: string
+          paid_at: string | null
+          session_id: string
+          status: string
+        }
+        Insert: {
+          birth_data: Json
+          created_at?: string
+          email: string
+          id?: string
+          paid_at?: string | null
+          session_id: string
+          status?: string
+        }
+        Update: {
+          birth_data?: Json
+          created_at?: string
+          email?: string
+          id?: string
+          paid_at?: string | null
+          session_id?: string
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
