@@ -13,17 +13,59 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Download, Share2, Star, RotateCcw, Lock } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function BirthChartResult() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [birthInfo, setBirthInfo] = useState<{ name: string; city: string } | null>(null);
+  const [isPaid, setIsPaid] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const wheelRef = useRef<HTMLDivElement>(null);
   const mandalaRef = useRef<HTMLDivElement>(null);
 
-  // Check if user has paid (via URL param for manual confirmation)
-  const isPaid = searchParams.get('acesso') === 'completo';
+  // Check payment status via session_id or localStorage
+  useEffect(() => {
+    const verifyPayment = async () => {
+      const sessionId = searchParams.get('session_id');
+      const paidParam = searchParams.get('paid');
+      
+      // Check localStorage first
+      const storedAccess = localStorage.getItem('birthChartAccess');
+      if (storedAccess) {
+        setIsPaid(true);
+        return;
+      }
+
+      // If returning from Stripe with session_id, verify
+      if (sessionId && paidParam === 'true') {
+        setIsVerifying(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('verify-payment', {
+            body: { sessionId }
+          });
+
+          if (error) {
+            console.error('Verification error:', error);
+            return;
+          }
+
+          if (data?.paid) {
+            setIsPaid(true);
+            localStorage.setItem('birthChartAccess', sessionId);
+            toast.success('Pagamento confirmado! Aproveite seu mapa completo.');
+          }
+        } catch (err) {
+          console.error('Error verifying payment:', err);
+        } finally {
+          setIsVerifying(false);
+        }
+      }
+    };
+
+    verifyPayment();
+  }, [searchParams]);
 
   useEffect(() => {
     const storedData = sessionStorage.getItem('birthChartData');
@@ -120,12 +162,14 @@ export default function BirthChartResult() {
     }
   };
 
-  if (!chartData || !birthInfo) {
+  if (!chartData || !birthInfo || isVerifying) {
     return (
       <div className="min-h-screen bg-gradient-cosmic flex items-center justify-center">
         <div className="text-center">
           <Star className="w-12 h-12 text-primary animate-spin mx-auto mb-4" />
-          <p className="text-foreground">Calculando seu mapa astral...</p>
+          <p className="text-foreground">
+            {isVerifying ? 'Verificando pagamento...' : 'Calculando seu mapa astral...'}
+          </p>
         </div>
       </div>
     );
