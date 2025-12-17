@@ -6,50 +6,63 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, ExternalLink, Star, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Check, Star, ArrowLeft, CreditCard, Loader2 } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
-
-const PIX_KEY = 'suachavepix@email.com'; // Substituir pela chave PIX real
-const WHATSAPP_NUMBER = '5551982290594'; // Substituir pelo número real
+import { supabase } from '@/integrations/supabase/client';
 
 export default function BirthChartPayment() {
   const navigate = useNavigate();
-  const [copied, setCopied] = useState(false);
-  const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCopyPix = async () => {
-    try {
-      await navigator.clipboard.writeText(PIX_KEY);
-      setCopied(true);
-      toast.success('Chave PIX copiada!');
-      setTimeout(() => setCopied(false), 3000);
-    } catch {
-      toast.error('Erro ao copiar');
+  const handleStripeCheckout = async () => {
+    if (!customerEmail || !customerEmail.includes('@')) {
+      toast.error('Por favor, informe um email válido');
+      return;
     }
-  };
 
-  const handleWhatsAppConfirmation = () => {
-    const birthData = sessionStorage.getItem('birthChartData');
-    const parsed = birthData ? JSON.parse(birthData) : {};
-    
-    const message = encodeURIComponent(
-      `Olá! Acabei de fazer o pagamento do Mapa Astral Completo.\n\n` +
-      `Nome: ${customerName || parsed.name || 'Não informado'}\n` +
-      `Email: ${customerEmail || 'Não informado'}\n` +
-      `Dados do mapa: ${parsed.name || ''} - ${parsed.date || ''}\n\n` +
-      `Por favor, confirme meu pagamento para liberação do mapa completo. 🌟`
-    );
-    
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${message}`, '_blank');
+    setIsLoading(true);
+
+    try {
+      const birthData = sessionStorage.getItem('birthChartData');
+      if (!birthData) {
+        toast.error('Dados do mapa não encontrados. Por favor, calcule novamente.');
+        navigate('/mapa-astral');
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-checkout', {
+        body: { 
+          email: customerEmail,
+          birthData: JSON.parse(birthData)
+        }
+      });
+
+      if (error) {
+        console.error('Checkout error:', error);
+        toast.error('Erro ao criar checkout. Tente novamente.');
+        return;
+      }
+
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        toast.error('Erro ao processar pagamento');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Erro ao processar. Tente novamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <>
       <Helmet>
         <title>Pagamento - Mapa Astral Completo | Horoscopo da Gabi</title>
-        <meta name="description" content="Finalize o pagamento do seu mapa astral completo via PIX." />
+        <meta name="description" content="Finalize o pagamento do seu mapa astral completo." />
       </Helmet>
       
       <div className="min-h-screen bg-gradient-cosmic">
@@ -70,7 +83,7 @@ export default function BirthChartPayment() {
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-2 mb-4">
                 <Star className="w-6 h-6 text-primary animate-pulse-glow" />
-                <span className="text-primary font-display text-lg">Pagamento via PIX</span>
+                <span className="text-primary font-display text-lg">Pagamento Seguro</span>
                 <Star className="w-6 h-6 text-primary animate-pulse-glow" />
               </div>
               <h1 className="text-3xl md:text-4xl font-display text-gradient-gold mb-2">
@@ -89,123 +102,57 @@ export default function BirthChartPayment() {
               </CardContent>
             </Card>
 
-            {/* Payment Instructions */}
+            {/* Payment Form */}
             <Card className="bg-card/50 border-primary/20 mb-6">
               <CardHeader>
                 <CardTitle className="font-display text-foreground flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm">1</span>
-                  Copie a chave PIX
+                  <CreditCard className="w-5 h-5 text-primary" />
+                  Finalizar Pagamento
                 </CardTitle>
-                <CardDescription>Use a chave abaixo para fazer o pagamento</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 bg-background/50 rounded-lg px-4 py-3 border border-primary/20 font-mono text-sm text-foreground break-all">
-                    {PIX_KEY}
-                  </div>
-                  <Button 
-                    onClick={handleCopyPix}
-                    variant="outline"
-                    className="border-primary/30 hover:bg-primary/10 shrink-0"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-4 h-4 mr-2 text-green-500" />
-                        Copiado
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4 mr-2" />
-                        Copiar
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 border-primary/20 mb-6">
-              <CardHeader>
-                <CardTitle className="font-display text-foreground flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm">2</span>
-                  Faça o PIX no seu banco
-                </CardTitle>
-                <CardDescription>Abra o app do seu banco e realize o pagamento</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="bg-background/50 rounded-lg p-4 border border-primary/10">
-                  <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      Abra o aplicativo do seu banco
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      Vá em PIX e escolha "Pagar com chave"
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      Cole a chave PIX copiada acima
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      Digite o valor: <strong className="text-foreground">R$ 49,90</strong>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-primary">•</span>
-                      Confirme o pagamento
-                    </li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card/50 border-primary/20 mb-6">
-              <CardHeader>
-                <CardTitle className="font-display text-foreground flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary text-sm">3</span>
-                  Confirme seu pagamento
-                </CardTitle>
-                <CardDescription>Envie o comprovante pelo WhatsApp para liberação imediata</CardDescription>
+                <CardDescription>
+                  Você será redirecionado para o checkout seguro do Stripe
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-foreground">Seu nome</Label>
-                    <Input
-                      id="name"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      placeholder="Digite seu nome"
-                      className="bg-background/50 border-primary/20 focus:border-primary"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-foreground">Seu email (opcional)</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={customerEmail}
-                      onChange={(e) => setCustomerEmail(e.target.value)}
-                      placeholder="email@exemplo.com"
-                      className="bg-background/50 border-primary/20 focus:border-primary"
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-foreground">Seu email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    className="bg-background/50 border-primary/20 focus:border-primary"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    O acesso ao mapa será liberado automaticamente após o pagamento
+                  </p>
                 </div>
                 
                 <Button 
                   size="lg" 
-                  onClick={handleWhatsAppConfirmation}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-display text-lg"
+                  onClick={handleStripeCheckout}
+                  disabled={isLoading}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-display text-lg"
                 >
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  Enviar Comprovante no WhatsApp
-                  <ExternalLink className="w-4 h-4 ml-2" />
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Processando...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="w-5 h-5 mr-2" />
+                      Pagar com Cartão
+                    </>
+                  )}
                 </Button>
-                
-                <p className="text-xs text-center text-muted-foreground">
-                  Após a confirmação do pagamento, você receberá um link para acessar seu mapa completo.
-                </p>
+
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <span>🔒</span>
+                  <span>Pagamento seguro processado pelo Stripe</span>
+                </div>
               </CardContent>
             </Card>
 
