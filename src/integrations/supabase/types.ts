@@ -44,6 +44,39 @@ export type Database = {
         }
         Relationships: []
       }
+      orders: {
+        Row: {
+          access_token: string
+          birth_data: Json
+          created_at: string
+          email: string
+          id: string
+          order_id: string
+          paid_at: string | null
+          status: string
+        }
+        Insert: {
+          access_token: string
+          birth_data: Json
+          created_at?: string
+          email: string
+          id?: string
+          order_id?: string
+          paid_at?: string | null
+          status?: string
+        }
+        Update: {
+          access_token?: string
+          birth_data?: Json
+          created_at?: string
+          email?: string
+          id?: string
+          order_id?: string
+          paid_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

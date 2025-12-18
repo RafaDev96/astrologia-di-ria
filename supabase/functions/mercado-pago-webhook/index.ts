@@ -79,21 +79,34 @@ serve(async (req) => {
       external_reference: payment.external_reference 
     });
 
-    // Update session status if payment is approved
+    // Update order status if payment is approved
     if (payment.status === "approved" && payment.external_reference) {
-      console.log("Payment approved, updating session:", payment.external_reference);
+      const orderId = payment.external_reference;
+      console.log("Payment approved, updating order:", orderId);
       
-      const { error } = await supabase
-        .from("checkout_sessions")
-        .update({ status: "paid", paid_at: new Date().toISOString() })
-        .eq("session_id", payment.external_reference);
+      // Update orders table
+      const { error: orderError } = await supabase
+        .from("orders")
+        .update({ status: "approved", paid_at: new Date().toISOString() })
+        .eq("order_id", orderId);
 
-      if (error) {
-        console.error("Error updating checkout session:", error);
-        throw error;
+      if (orderError) {
+        console.error("Error updating order:", orderError);
+      } else {
+        console.log(`Order ${orderId} marked as approved`);
       }
 
-      console.log(`Payment completed for session: ${payment.external_reference}`);
+      // Also update checkout_sessions for backward compatibility
+      const { error: sessionError } = await supabase
+        .from("checkout_sessions")
+        .update({ status: "paid", paid_at: new Date().toISOString() })
+        .eq("session_id", orderId);
+
+      if (sessionError) {
+        console.error("Error updating checkout session:", sessionError);
+      }
+
+      console.log(`Payment completed for order: ${orderId}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {

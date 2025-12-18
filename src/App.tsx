@@ -9,6 +9,10 @@ import SignDetail from "./pages/SignDetail";
 import BirthChart from "./pages/BirthChart";
 import BirthChartResult from "./pages/BirthChartResult";
 import BirthChartPayment from "./pages/BirthChartPayment";
+import PaymentPending from "./pages/PaymentPending";
+import PaymentSuccess from "./pages/PaymentSuccess";
+import PaymentError from "./pages/PaymentError";
+import FullBirthChart from "./pages/FullBirthChart";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +30,10 @@ const App = () => (
             <Route path="/mapa-astral" element={<BirthChart />} />
             <Route path="/mapa-astral/resultado" element={<BirthChartResult />} />
             <Route path="/mapa-astral/pagamento" element={<BirthChartPayment />} />
+            <Route path="/pagamento/aguardando" element={<PaymentPending />} />
+            <Route path="/pagamento/sucesso" element={<PaymentSuccess />} />
+            <Route path="/pagamento/erro" element={<PaymentError />} />
+            <Route path="/mapa-completo" element={<FullBirthChart />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
