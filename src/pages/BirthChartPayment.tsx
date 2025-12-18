@@ -1,24 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Check, Star, ArrowLeft, CreditCard, Loader2 } from 'lucide-react';
+import { Check, Star, ArrowLeft, CreditCard, Loader2, LogIn } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function BirthChartPayment() {
   const navigate = useNavigate();
-  const [customerEmail, setCustomerEmail] = useState('');
+  const { user, isPremium, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
+  // If user is already premium, redirect to full chart
+  useEffect(() => {
+    if (!authLoading && isPremium) {
+      navigate('/mapa-completo');
+    }
+  }, [authLoading, isPremium, navigate]);
+
   const handleMercadoPagoCheckout = async () => {
-    if (!customerEmail || !customerEmail.includes('@')) {
-      toast.error('Por favor, informe um email válido');
+    // Must be logged in
+    if (!user) {
+      toast.error('Você precisa estar logado para comprar');
+      navigate('/login');
       return;
     }
 
@@ -34,8 +42,9 @@ export default function BirthChartPayment() {
 
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
-          email: customerEmail,
-          birthData: JSON.parse(birthData)
+          email: user.email,
+          birthData: JSON.parse(birthData),
+          userId: user.id
         }
       });
 
@@ -45,9 +54,7 @@ export default function BirthChartPayment() {
         return;
       }
 
-      if (data?.url && data?.order_id) {
-        // Store order_id for verification after payment
-        sessionStorage.setItem('pendingOrderId', data.order_id);
+      if (data?.url) {
         window.location.href = data.url;
       } else {
         toast.error('Erro ao processar pagamento');
@@ -59,6 +66,14 @@ export default function BirthChartPayment() {
       setIsLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-cosmic flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <>
@@ -104,59 +119,81 @@ export default function BirthChartPayment() {
               </CardContent>
             </Card>
 
-            {/* Payment Form */}
-            <Card className="bg-card/50 border-primary/20 mb-6">
-              <CardHeader>
-                <CardTitle className="font-display text-foreground flex items-center gap-2">
-                  <CreditCard className="w-5 h-5 text-primary" />
-                  Finalizar Pagamento
-                </CardTitle>
-                <CardDescription>
-                  Você será redirecionado para o checkout seguro do Mercado Pago
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-foreground">Seu email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={customerEmail}
-                    onChange={(e) => setCustomerEmail(e.target.value)}
-                    placeholder="seu@email.com"
-                    className="bg-background/50 border-primary/20 focus:border-primary"
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    O acesso ao mapa será liberado automaticamente após o pagamento
+            {/* Auth Check */}
+            {!user ? (
+              <Card className="bg-card/50 border-primary/20 mb-6">
+                <CardHeader>
+                  <CardTitle className="font-display text-foreground flex items-center gap-2">
+                    <LogIn className="w-5 h-5 text-primary" />
+                    Faça Login para Continuar
+                  </CardTitle>
+                  <CardDescription>
+                    Você precisa estar logado para efetuar a compra
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <Button 
+                    size="lg" 
+                    onClick={() => navigate('/login')}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-display text-lg"
+                  >
+                    <LogIn className="w-5 h-5 mr-2" />
+                    Entrar
+                  </Button>
+                  <p className="text-center text-sm text-muted-foreground">
+                    Não tem conta?{' '}
+                    <button 
+                      onClick={() => navigate('/cadastro')}
+                      className="text-primary hover:underline"
+                    >
+                      Criar conta
+                    </button>
                   </p>
-                </div>
-                
-                <Button 
-                  size="lg" 
-                  onClick={handleMercadoPagoCheckout}
-                  disabled={isLoading}
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-display text-lg"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                      Processando...
-                    </>
-                  ) : (
-                    <>
-                      <CreditCard className="w-5 h-5 mr-2" />
-                      Pagar com PIX ou Cartão
-                    </>
-                  )}
-                </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-card/50 border-primary/20 mb-6">
+                <CardHeader>
+                  <CardTitle className="font-display text-foreground flex items-center gap-2">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                    Finalizar Pagamento
+                  </CardTitle>
+                  <CardDescription>
+                    Logado como: {user.email}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Você será redirecionado para o checkout seguro do Mercado Pago.
+                    Após o pagamento, seu acesso premium será liberado automaticamente.
+                  </p>
+                  
+                  <Button 
+                    size="lg" 
+                    onClick={handleMercadoPagoCheckout}
+                    disabled={isLoading}
+                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-display text-lg"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Processando...
+                      </>
+                    ) : (
+                      <>
+                        <CreditCard className="w-5 h-5 mr-2" />
+                        Pagar com PIX ou Cartão
+                      </>
+                    )}
+                  </Button>
 
-                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                  <span>🔒</span>
-                  <span>Pagamento seguro processado pelo Mercado Pago</span>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                    <span>🔒</span>
+                    <span>Pagamento seguro processado pelo Mercado Pago</span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* What's Included */}
             <Card className="bg-gradient-to-br from-cosmic-purple/10 to-primary/10 border-primary/30">

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -9,67 +9,80 @@ import ZodiacWheel from "@/components/ZodiacWheel";
 import ArtisticMandala from "@/components/ArtisticMandala";
 import ChartInterpretation from "@/components/ChartInterpretation";
 import { calculateBirthChart, ChartData, BirthData } from "@/utils/astroCalculations";
+import { useAuth } from "@/hooks/useAuth";
 
 const FullBirthChart = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { user, profile, isPremium, loading: authLoading, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [isValid, setIsValid] = useState(false);
-  const [birthInfo, setBirthInfo] = useState<{ name: string; birthPlace: string } | null>(null);
   const [chartData, setChartData] = useState<ChartData | null>(null);
-
-  const token = searchParams.get("token");
+  const [birthInfo, setBirthInfo] = useState<{ name: string; birthPlace: string } | null>(null);
 
   useEffect(() => {
-    const validateAccess = async () => {
-      // Check sessionStorage first
-      const storedToken = sessionStorage.getItem("orderToken");
-      const storedBirthData = sessionStorage.getItem("orderBirthData");
+    // Redirect if not logged in
+    if (!authLoading && !user) {
+      navigate("/login");
+      return;
+    }
 
-      if (token && storedToken === token && storedBirthData) {
-        try {
-          const data = JSON.parse(storedBirthData);
-          setBirthInfo({ name: data.name, birthPlace: data.birthPlace || data.city });
-          
-          // Build BirthData object
-          const birthData: BirthData = {
-            date: new Date(data.birthDate),
-            time: data.birthTime,
-            latitude: data.latitude,
-            longitude: data.longitude,
-            city: data.birthPlace || data.city || ''
-          };
-          
-          // Calculate the chart
-          const chart = await calculateBirthChart(birthData);
-          setChartData(chart);
-          setIsValid(true);
-        } catch (err) {
-          console.error("Error parsing birth data:", err);
-        }
-      } else if (token) {
-        // Try to validate token via API by checking all orders
-        // For security, we'll require the data to be in sessionStorage
-        setIsValid(false);
+    // Refresh profile to get latest premium status
+    if (user) {
+      refreshProfile();
+    }
+  }, [authLoading, user, navigate, refreshProfile]);
+
+  useEffect(() => {
+    const loadChart = async () => {
+      if (!isPremium || !profile?.birth_data) {
+        setIsLoading(false);
+        return;
       }
 
-      setIsLoading(false);
+      try {
+        const data = profile.birth_data;
+        setBirthInfo({ 
+          name: data.name || "Seu Mapa", 
+          birthPlace: data.birthPlace || data.city || ""
+        });
+
+        // Build BirthData object
+        const birthData: BirthData = {
+          date: new Date(data.birthDate),
+          time: data.birthTime,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          city: data.birthPlace || data.city || ""
+        };
+
+        // Calculate the chart
+        const chart = await calculateBirthChart(birthData);
+        setChartData(chart);
+      } catch (err) {
+        console.error("Error calculating chart:", err);
+      } finally {
+        setIsLoading(false);
+      }
     };
 
-    validateAccess();
-  }, [token]);
+    if (!authLoading && isPremium) {
+      loadChart();
+    } else if (!authLoading) {
+      setIsLoading(false);
+    }
+  }, [authLoading, isPremium, profile]);
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-cosmic flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
 
-  if (!isValid || !chartData) {
+  // Not premium - show restricted view
+  if (!isPremium) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <div className="min-h-screen bg-gradient-cosmic flex flex-col">
         <Helmet>
           <title>Acesso Restrito | Horóscopo da Gabi</title>
         </Helmet>
@@ -82,28 +95,29 @@ const FullBirthChart = () => {
               <Lock className="w-10 h-10 text-amber-500" />
             </div>
             
-            <h1 className="text-2xl font-bold text-foreground">
-              Acesso Restrito
+            <h1 className="text-2xl font-display text-gradient-gold">
+              Acesso Premium Necessário
             </h1>
             
             <p className="text-muted-foreground">
-              Para acessar o mapa astral completo, você precisa realizar o pagamento primeiro.
+              Para acessar o mapa astral completo, você precisa desbloquear o acesso premium.
             </p>
 
             <div className="space-y-3">
               <Button
-                onClick={() => navigate("/mapa-astral/pagamento")}
+                onClick={() => navigate("/mapa-astral")}
                 size="lg"
-                className="w-full"
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-display"
               >
-                Comprar Mapa Astral Completo
+                <Star className="w-4 h-4 mr-2" />
+                Calcular e Comprar Mapa Completo
               </Button>
 
               <Button
                 onClick={() => navigate("/mapa-astral/resultado")}
                 variant="outline"
                 size="lg"
-                className="w-full"
+                className="w-full border-primary/30"
               >
                 Ver Versão Gratuita
               </Button>
@@ -116,12 +130,52 @@ const FullBirthChart = () => {
     );
   }
 
-  // Get sun, moon, and ascendant from chart data
+  // No birth data saved
+  if (!chartData) {
+    return (
+      <div className="min-h-screen bg-gradient-cosmic flex flex-col">
+        <Helmet>
+          <title>Mapa Astral | Horóscopo da Gabi</title>
+        </Helmet>
+
+        <Header />
+
+        <main className="flex-1 flex items-center justify-center py-12 px-4">
+          <div className="max-w-md w-full text-center space-y-6">
+            <div className="w-20 h-20 mx-auto bg-primary/20 rounded-full flex items-center justify-center">
+              <Star className="w-10 h-10 text-primary" />
+            </div>
+            
+            <h1 className="text-2xl font-display text-gradient-gold">
+              Você tem Acesso Premium!
+            </h1>
+            
+            <p className="text-muted-foreground">
+              Mas ainda não temos seus dados de nascimento. Calcule seu mapa astral para visualizá-lo.
+            </p>
+
+            <Button
+              onClick={() => navigate("/mapa-astral")}
+              size="lg"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-display"
+            >
+              <Star className="w-4 h-4 mr-2" />
+              Calcular Meu Mapa Astral
+            </Button>
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
+  // Get sun, moon from chart data
   const sunPlanet = chartData.planets.find(p => p.planet === 'Sol');
   const moonPlanet = chartData.planets.find(p => p.planet === 'Lua');
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-cosmic flex flex-col">
       <Helmet>
         <title>Mapa Astral Completo de {birthInfo?.name} | Horóscopo da Gabi</title>
         <meta name="description" content="Seu mapa astral completo com todos os planetas, casas e aspectos." />
@@ -133,7 +187,12 @@ const FullBirthChart = () => {
         <div className="max-w-6xl mx-auto space-y-8">
           {/* Header */}
           <div className="text-center space-y-2">
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+            <div className="inline-flex items-center gap-2 mb-2">
+              <Star className="w-5 h-5 text-primary animate-pulse-glow" />
+              <span className="text-primary text-sm font-display">PREMIUM</span>
+              <Star className="w-5 h-5 text-primary animate-pulse-glow" />
+            </div>
+            <h1 className="text-3xl md:text-4xl font-display text-gradient-gold">
               Mapa Astral Completo
             </h1>
             <p className="text-xl text-primary">{birthInfo?.name}</p>
@@ -145,19 +204,19 @@ const FullBirthChart = () => {
 
           {/* Big Three Summary */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-card rounded-lg p-6 text-center border border-border">
+            <div className="bg-card/50 rounded-lg p-6 text-center border border-primary/20">
               <p className="text-sm text-muted-foreground mb-1">Sol</p>
-              <p className="text-2xl font-bold text-primary">{sunPlanet?.sign}</p>
+              <p className="text-2xl font-display text-gradient-gold">{sunPlanet?.sign}</p>
               <p className="text-xs text-muted-foreground">{sunPlanet?.degree.toFixed(1)}°</p>
             </div>
-            <div className="bg-card rounded-lg p-6 text-center border border-border">
+            <div className="bg-card/50 rounded-lg p-6 text-center border border-primary/20">
               <p className="text-sm text-muted-foreground mb-1">Lua</p>
-              <p className="text-2xl font-bold text-primary">{moonPlanet?.sign}</p>
+              <p className="text-2xl font-display text-gradient-gold">{moonPlanet?.sign}</p>
               <p className="text-xs text-muted-foreground">{moonPlanet?.degree.toFixed(1)}°</p>
             </div>
-            <div className="bg-card rounded-lg p-6 text-center border border-border">
+            <div className="bg-card/50 rounded-lg p-6 text-center border border-primary/20">
               <p className="text-sm text-muted-foreground mb-1">Ascendente</p>
-              <p className="text-2xl font-bold text-primary">{chartData.ascendant.sign}</p>
+              <p className="text-2xl font-display text-gradient-gold">{chartData.ascendant.sign}</p>
               <p className="text-xs text-muted-foreground">{chartData.ascendant.degree.toFixed(1)}°</p>
             </div>
           </div>
@@ -165,13 +224,13 @@ const FullBirthChart = () => {
           {/* Visualizations */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground text-center">
+              <h2 className="text-xl font-display text-foreground text-center">
                 Mapa Tradicional
               </h2>
               <ZodiacWheel chartData={chartData} />
             </div>
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground text-center">
+              <h2 className="text-xl font-display text-foreground text-center">
                 Mandala Artística
               </h2>
               <ArtisticMandala chartData={chartData} />
@@ -179,8 +238,8 @@ const FullBirthChart = () => {
           </div>
 
           {/* Complete Planets */}
-          <div className="bg-card rounded-lg p-6 border border-border">
-            <h2 className="text-xl font-semibold text-foreground mb-4">
+          <div className="bg-card/50 rounded-lg p-6 border border-primary/20">
+            <h2 className="text-xl font-display text-foreground mb-4">
               Todos os Planetas
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -197,8 +256,8 @@ const FullBirthChart = () => {
           </div>
 
           {/* Houses */}
-          <div className="bg-card rounded-lg p-6 border border-border">
-            <h2 className="text-xl font-semibold text-foreground mb-4">
+          <div className="bg-card/50 rounded-lg p-6 border border-primary/20">
+            <h2 className="text-xl font-display text-foreground mb-4">
               Casas Astrológicas
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -217,8 +276,8 @@ const FullBirthChart = () => {
 
           {/* Aspects */}
           {chartData.aspects && chartData.aspects.length > 0 && (
-            <div className="bg-card rounded-lg p-6 border border-border">
-              <h2 className="text-xl font-semibold text-foreground mb-4">
+            <div className="bg-card/50 rounded-lg p-6 border border-primary/20">
+              <h2 className="text-xl font-display text-foreground mb-4">
                 Aspectos Planetários
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
