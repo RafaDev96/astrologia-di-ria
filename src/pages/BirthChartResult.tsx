@@ -25,12 +25,9 @@ export default function BirthChartResult() {
   const wheelRef = useRef<HTMLDivElement>(null);
   const mandalaRef = useRef<HTMLDivElement>(null);
 
-  // Check payment status via session_id or localStorage
+  // Check payment status via external_reference or localStorage
   useEffect(() => {
     const verifyPayment = async () => {
-      const sessionId = searchParams.get('session_id');
-      const paidParam = searchParams.get('paid');
-      
       // Check localStorage first
       const storedAccess = localStorage.getItem('birthChartAccess');
       if (storedAccess) {
@@ -38,8 +35,12 @@ export default function BirthChartResult() {
         return;
       }
 
-      // If returning from Stripe with session_id, verify
-      if (sessionId && paidParam === 'true') {
+      // Get session_id from URL params (Mercado Pago uses external_reference)
+      const externalReference = searchParams.get('external_reference');
+      const pendingSessionId = sessionStorage.getItem('pendingSessionId');
+      const sessionId = externalReference || pendingSessionId;
+      
+      if (sessionId) {
         setIsVerifying(true);
         try {
           const { data, error } = await supabase.functions.invoke('verify-payment', {
@@ -54,6 +55,7 @@ export default function BirthChartResult() {
           if (data?.paid) {
             setIsPaid(true);
             localStorage.setItem('birthChartAccess', sessionId);
+            sessionStorage.removeItem('pendingSessionId');
             toast.success('Pagamento confirmado! Aproveite seu mapa completo.');
           }
         } catch (err) {
