@@ -27,12 +27,16 @@ export default function BirthChartResult() {
 
   // Check payment status via external_reference or localStorage
   useEffect(() => {
-    const verifyPayment = async () => {
+    let pollInterval: NodeJS.Timeout | null = null;
+    let pollCount = 0;
+    const maxPolls = 30; // Poll for up to 2.5 minutes (30 * 5s)
+
+    const verifyPayment = async (showLoading = true) => {
       // Check localStorage first
       const storedAccess = localStorage.getItem('birthChartAccess');
       if (storedAccess) {
         setIsPaid(true);
-        return;
+        return true;
       }
 
       // Get session_id from URL params (Mercado Pago uses external_reference)
@@ -41,7 +45,7 @@ export default function BirthChartResult() {
       const sessionId = externalReference || pendingSessionId;
       
       if (sessionId) {
-        setIsVerifying(true);
+        if (showLoading) setIsVerifying(true);
         try {
           const { data, error } = await supabase.functions.invoke('verify-payment', {
             body: { sessionId }
@@ -49,7 +53,7 @@ export default function BirthChartResult() {
 
           if (error) {
             console.error('Verification error:', error);
-            return;
+            return false;
           }
 
           if (data?.paid) {
@@ -57,16 +61,39 @@ export default function BirthChartResult() {
             localStorage.setItem('birthChartAccess', sessionId);
             sessionStorage.removeItem('pendingSessionId');
             toast.success('Pagamento confirmado! Aproveite seu mapa completo.');
+            return true;
           }
         } catch (err) {
           console.error('Error verifying payment:', err);
         } finally {
-          setIsVerifying(false);
+          if (showLoading) setIsVerifying(false);
         }
       }
+      return false;
     };
 
-    verifyPayment();
+    // Initial verification
+    verifyPayment().then((paid) => {
+      // If not paid and we have a session to check, start polling
+      const externalReference = searchParams.get('external_reference');
+      const pendingSessionId = sessionStorage.getItem('pendingSessionId');
+      const sessionId = externalReference || pendingSessionId;
+      
+      if (!paid && sessionId) {
+        pollInterval = setInterval(async () => {
+          pollCount++;
+          const isPaidNow = await verifyPayment(false);
+          
+          if (isPaidNow || pollCount >= maxPolls) {
+            if (pollInterval) clearInterval(pollInterval);
+          }
+        }, 5000); // Check every 5 seconds
+      }
+    });
+
+    return () => {
+      if (pollInterval) clearInterval(pollInterval);
+    };
   }, [searchParams]);
 
   useEffect(() => {
