@@ -12,13 +12,19 @@ import { useAuth } from '@/hooks/useAuth';
 
 export default function BirthChartPayment() {
   const navigate = useNavigate();
-  const { user, isPremium, loading: authLoading } = useAuth();
+  const { user, profile, isPremium, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
-  // If user is already premium, redirect to full chart
+  // If user is already premium, redirect to result page (which will show full content)
   useEffect(() => {
     if (!authLoading && isPremium) {
-      navigate('/mapa-completo');
+      // Check if we have birth data in session, if so go to result page
+      const birthData = sessionStorage.getItem('birthChartData');
+      if (birthData) {
+        navigate('/mapa-astral/resultado');
+      } else {
+        navigate('/mapa-completo');
+      }
     }
   }, [authLoading, isPremium, navigate]);
 
@@ -33,8 +39,24 @@ export default function BirthChartPayment() {
     setIsLoading(true);
 
     try {
-      const birthData = sessionStorage.getItem('birthChartData');
-      if (!birthData) {
+      // Try sessionStorage first, then profile
+      let birthData = sessionStorage.getItem('birthChartData');
+      let birthDataParsed = birthData ? JSON.parse(birthData) : null;
+
+      // If no sessionStorage data, try to get from profile
+      if (!birthDataParsed && profile?.birth_data) {
+        const profileData = profile.birth_data as any;
+        birthDataParsed = {
+          name: profileData.name,
+          date: profileData.birthDate,
+          time: profileData.birthTime,
+          city: profileData.city || profileData.birthPlace,
+          latitude: profileData.latitude,
+          longitude: profileData.longitude,
+        };
+      }
+
+      if (!birthDataParsed) {
         toast.error('Dados do mapa não encontrados. Por favor, calcule novamente.');
         navigate('/mapa-astral');
         return;
@@ -43,7 +65,7 @@ export default function BirthChartPayment() {
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
           email: user.email,
-          birthData: JSON.parse(birthData),
+          birthData: birthDataParsed,
           userId: user.id
         }
       });
