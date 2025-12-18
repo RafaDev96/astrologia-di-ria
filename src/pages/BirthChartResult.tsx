@@ -14,10 +14,12 @@ import { Download, Share2, Star, RotateCcw, Lock } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function BirthChartResult() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { user, isPremium, refreshProfile } = useAuth();
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [birthInfo, setBirthInfo] = useState<{ name: string; city: string } | null>(null);
   const [isPaid, setIsPaid] = useState(false);
@@ -25,13 +27,26 @@ export default function BirthChartResult() {
   const wheelRef = useRef<HTMLDivElement>(null);
   const mandalaRef = useRef<HTMLDivElement>(null);
 
+  // Check if user is premium
+  useEffect(() => {
+    if (isPremium) {
+      setIsPaid(true);
+    }
+  }, [isPremium]);
+
   // Check payment status via external_reference or localStorage
   useEffect(() => {
     let pollInterval: NodeJS.Timeout | null = null;
     let pollCount = 0;
-    const maxPolls = 30; // Poll for up to 2.5 minutes (30 * 5s)
+    const maxPolls = 30;
 
     const verifyPayment = async (showLoading = true) => {
+      // If user is premium, they're paid
+      if (isPremium) {
+        setIsPaid(true);
+        return true;
+      }
+
       // Check localStorage first
       const storedAccess = localStorage.getItem('birthChartAccess');
       if (storedAccess) {
@@ -39,7 +54,6 @@ export default function BirthChartResult() {
         return true;
       }
 
-      // Get session_id from URL params (Mercado Pago uses external_reference)
       const externalReference = searchParams.get('external_reference');
       const pendingSessionId = sessionStorage.getItem('pendingSessionId');
       const sessionId = externalReference || pendingSessionId;
@@ -72,9 +86,7 @@ export default function BirthChartResult() {
       return false;
     };
 
-    // Initial verification
     verifyPayment().then((paid) => {
-      // If not paid and we have a session to check, start polling
       const externalReference = searchParams.get('external_reference');
       const pendingSessionId = sessionStorage.getItem('pendingSessionId');
       const sessionId = externalReference || pendingSessionId;
@@ -87,14 +99,41 @@ export default function BirthChartResult() {
           if (isPaidNow || pollCount >= maxPolls) {
             if (pollInterval) clearInterval(pollInterval);
           }
-        }, 5000); // Check every 5 seconds
+        }, 5000);
       }
     });
 
     return () => {
       if (pollInterval) clearInterval(pollInterval);
     };
-  }, [searchParams]);
+  }, [searchParams, isPremium]);
+
+  // Save birth data to user profile when logged in
+  const saveBirthDataToProfile = async (data: any) => {
+    if (!user) return;
+    
+    try {
+      const birthDataForProfile = {
+        name: data.name,
+        birthDate: data.date,
+        birthTime: data.time,
+        birthPlace: data.city,
+        city: data.city,
+        latitude: data.latitude,
+        longitude: data.longitude,
+      };
+
+      await supabase
+        .from('user_profiles')
+        .update({ birth_data: birthDataForProfile })
+        .eq('user_id', user.id);
+
+      // Refresh profile to update local state
+      await refreshProfile();
+    } catch (error) {
+      console.error('Error saving birth data to profile:', error);
+    }
+  };
 
   useEffect(() => {
     const storedData = sessionStorage.getItem('birthChartData');
@@ -107,7 +146,6 @@ export default function BirthChartResult() {
       try {
         const parsed = JSON.parse(storedData);
         
-        // Parse date correctly without timezone issues
         const [year, month, day] = parsed.date.split('-').map(Number);
         const birthDate = new Date(year, month - 1, day);
         
@@ -122,6 +160,9 @@ export default function BirthChartResult() {
         const calculated = await calculateBirthChart(birthData);
         setChartData(calculated);
         setBirthInfo({ name: parsed.name, city: parsed.city });
+
+        // Save birth data to user profile if logged in
+        saveBirthDataToProfile(parsed);
       } catch (error) {
         console.error('Error calculating chart:', error);
         navigate('/mapa-astral');
@@ -129,7 +170,7 @@ export default function BirthChartResult() {
     };
     
     calculateChart();
-  }, [navigate]);
+  }, [navigate, user]);
 
   const handleDownload = async (type: 'wheel' | 'mandala') => {
     if (!isPaid) {
