@@ -6,24 +6,20 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Generate a secure random token
-function generateAccessToken(length = 48): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const array = new Uint8Array(length);
-  crypto.getRandomValues(array);
-  return Array.from(array, (byte) => chars[byte % chars.length]).join('');
-}
-
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { email, birthData } = await req.json();
+    const { email, birthData, userId } = await req.json();
 
     if (!email || !birthData) {
       throw new Error("Email e dados de nascimento são obrigatórios");
+    }
+
+    if (!userId) {
+      throw new Error("Usuário deve estar logado para efetuar o pagamento");
     }
 
     const accessToken = Deno.env.get("MERCADO_PAGO_ACCESS_TOKEN");
@@ -38,27 +34,19 @@ serve(async (req) => {
     // Production URL for back_urls
     const productionUrl = "https://horoscopodagabi.vercel.app";
 
-    // Generate order_id and access_token
-    const orderId = crypto.randomUUID();
-    const orderAccessToken = generateAccessToken();
+    console.log("Creating checkout for user:", userId, "email:", email);
 
-    // Create order in database first
-    const { error: orderError } = await supabase.from("orders").insert({
-      order_id: orderId,
-      access_token: orderAccessToken,
-      email: email,
-      birth_data: birthData,
-      status: "pending",
-    });
+    // Store birth_data in user_profiles for later use
+    const { error: profileError } = await supabase
+      .from("user_profiles")
+      .update({ birth_data: birthData })
+      .eq("user_id", userId);
 
-    if (orderError) {
-      console.error("Order creation error:", orderError);
-      throw new Error("Erro ao criar pedido");
+    if (profileError) {
+      console.error("Error updating profile with birth_data:", profileError);
     }
 
-    console.log("Order created:", { orderId, email });
-
-    // Create Mercado Pago preference with correct back_urls
+    // Create Mercado Pago preference with user_id as external_reference
     const preferenceData = {
       items: [
         {
@@ -73,16 +61,19 @@ serve(async (req) => {
         email: email,
       },
       back_urls: {
-        success: `${productionUrl}/pagamento/sucesso?order=${orderId}`,
-        failure: `${productionUrl}/pagamento/erro?order=${orderId}`,
-        pending: `${productionUrl}/pagamento/aguardando?order=${orderId}`,
+        success: `${productionUrl}/pos-pagamento`,
+        failure: `${productionUrl}/pagamento/erro`,
+        pending: `${productionUrl}/pos-pagamento`,
       },
       auto_return: "approved",
-      external_reference: orderId,
+      external_reference: userId, // Using user_id as external_reference
       notification_url: `${supabaseUrl}/functions/v1/mercado-pago-webhook`,
+      metadata: {
+        user_id: userId,
+      },
     };
 
-    console.log("Creating Mercado Pago preference...", { email, external_reference: orderId });
+    console.log("Creating Mercado Pago preference...", { email, external_reference: userId });
 
     const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -103,8 +94,7 @@ serve(async (req) => {
     console.log("Preference created:", { id: preference.id, init_point: preference.init_point });
 
     return new Response(JSON.stringify({ 
-      url: preference.init_point,
-      order_id: orderId 
+      url: preference.init_point 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

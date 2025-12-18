@@ -79,34 +79,49 @@ serve(async (req) => {
       external_reference: payment.external_reference 
     });
 
-    // Update order status if payment is approved
+    // Update user_profiles if payment is approved
     if (payment.status === "approved" && payment.external_reference) {
-      const orderId = payment.external_reference;
-      console.log("Payment approved, updating order:", orderId);
+      const userId = payment.external_reference;
+      console.log("Payment approved, updating user profile for user_id:", userId);
       
-      // Update orders table
+      // Update user_profiles table to set is_premium = true
+      const { error: profileError } = await supabase
+        .from("user_profiles")
+        .update({ 
+          is_premium: true, 
+          premium_activated_at: new Date().toISOString(),
+          mp_last_payment_id: String(payment.id)
+        })
+        .eq("user_id", userId);
+
+      if (profileError) {
+        console.error("Error updating user profile:", profileError);
+      } else {
+        console.log(`User ${userId} is now premium!`);
+      }
+
+      // Also update orders table for backward compatibility (if order exists)
       const { error: orderError } = await supabase
         .from("orders")
         .update({ status: "approved", paid_at: new Date().toISOString() })
-        .eq("order_id", orderId);
+        .eq("order_id", userId);
 
       if (orderError) {
-        console.error("Error updating order:", orderError);
-      } else {
-        console.log(`Order ${orderId} marked as approved`);
+        // This is expected to fail if there's no order with this ID
+        console.log("No matching order found (this is OK for user-based flow)");
       }
 
       // Also update checkout_sessions for backward compatibility
       const { error: sessionError } = await supabase
         .from("checkout_sessions")
         .update({ status: "paid", paid_at: new Date().toISOString() })
-        .eq("session_id", orderId);
+        .eq("session_id", userId);
 
       if (sessionError) {
-        console.error("Error updating checkout session:", sessionError);
+        console.log("No matching checkout session found (this is OK for user-based flow)");
       }
 
-      console.log(`Payment completed for order: ${orderId}`);
+      console.log(`Premium activated for user: ${userId}`);
     }
 
     return new Response(JSON.stringify({ received: true }), {

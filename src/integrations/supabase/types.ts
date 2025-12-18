@@ -77,6 +77,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          birth_data: Json | null
+          created_at: string
+          id: string
+          is_premium: boolean
+          mp_last_payment_id: string | null
+          premium_activated_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birth_data?: Json | null
+          created_at?: string
+          id?: string
+          is_premium?: boolean
+          mp_last_payment_id?: string | null
+          premium_activated_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birth_data?: Json | null
+          created_at?: string
+          id?: string
+          is_premium?: boolean
+          mp_last_payment_id?: string | null
+          premium_activated_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

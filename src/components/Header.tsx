@@ -1,7 +1,10 @@
 import { Link } from "react-router-dom";
-import { Star, Youtube, Instagram } from "lucide-react";
+import { Star, Youtube, User, LogIn } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const Header = () => {
+  const { user, loading } = useAuth();
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
@@ -37,6 +40,26 @@ const Header = () => {
             <Youtube className="w-5 h-5" />
             <span className="font-body text-lg">YouTube</span>
           </a>
+          
+          {!loading && (
+            user ? (
+              <Link
+                to="/conta"
+                className="flex items-center gap-2 text-primary hover:text-primary/80 transition-colors duration-300"
+              >
+                <User className="w-5 h-5" />
+                <span className="font-body text-lg">Conta</span>
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="flex items-center gap-2 text-foreground/80 hover:text-primary transition-colors duration-300"
+              >
+                <LogIn className="w-5 h-5" />
+                <span className="font-body text-lg">Entrar</span>
+              </Link>
+            )
+          )}
         </nav>
 
         <div className="flex items-center gap-4 md:hidden">
@@ -48,6 +71,23 @@ const Header = () => {
           >
             <Youtube className="w-6 h-6" />
           </a>
+          {!loading && (
+            user ? (
+              <Link
+                to="/conta"
+                className="text-primary hover:text-primary/80 transition-colors"
+              >
+                <User className="w-6 h-6" />
+              </Link>
+            ) : (
+              <Link
+                to="/login"
+                className="text-foreground/80 hover:text-primary transition-colors"
+              >
+                <LogIn className="w-6 h-6" />
+              </Link>
+            )
+          )}
         </div>
       </div>
     </header>
