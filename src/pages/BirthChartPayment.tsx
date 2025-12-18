@@ -16,7 +16,7 @@ export default function BirthChartPayment() {
   const [customerEmail, setCustomerEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleStripeCheckout = async () => {
+  const handleMercadoPagoCheckout = async () => {
     if (!customerEmail || !customerEmail.includes('@')) {
       toast.error('Por favor, informe um email válido');
       return;
@@ -45,7 +45,9 @@ export default function BirthChartPayment() {
         return;
       }
 
-      if (data?.url) {
+      if (data?.url && data?.session_id) {
+        // Store session_id for verification after payment
+        sessionStorage.setItem('pendingSessionId', data.session_id);
         window.location.href = data.url;
       } else {
         toast.error('Erro ao processar pagamento');
@@ -110,7 +112,7 @@ export default function BirthChartPayment() {
                   Finalizar Pagamento
                 </CardTitle>
                 <CardDescription>
-                  Você será redirecionado para o checkout seguro do Stripe
+                  Você será redirecionado para o checkout seguro do Mercado Pago
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -132,7 +134,7 @@ export default function BirthChartPayment() {
                 
                 <Button 
                   size="lg" 
-                  onClick={handleStripeCheckout}
+                  onClick={handleMercadoPagoCheckout}
                   disabled={isLoading}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-display text-lg"
                 >
@@ -144,14 +146,14 @@ export default function BirthChartPayment() {
                   ) : (
                     <>
                       <CreditCard className="w-5 h-5 mr-2" />
-                      Pagar com Cartão
+                      Pagar com PIX ou Cartão
                     </>
                   )}
                 </Button>
 
                 <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
                   <span>🔒</span>
-                  <span>Pagamento seguro processado pelo Stripe</span>
+                  <span>Pagamento seguro processado pelo Mercado Pago</span>
                 </div>
               </CardContent>
             </Card>
