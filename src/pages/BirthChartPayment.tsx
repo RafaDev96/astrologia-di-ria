@@ -45,9 +45,9 @@ export default function BirthChartPayment() {
         return;
       }
 
-      if (data?.url && data?.session_id) {
-        // Store session_id for verification after payment
-        sessionStorage.setItem('pendingSessionId', data.session_id);
+      if (data?.url && data?.order_id) {
+        // Store order_id for verification after payment
+        sessionStorage.setItem('pendingOrderId', data.order_id);
         window.location.href = data.url;
       } else {
         toast.error('Erro ao processar pagamento');

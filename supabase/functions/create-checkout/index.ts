@@ -6,6 +6,14 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Generate a secure random token
+function generateAccessToken(length = 48): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const array = new Uint8Array(length);
+  crypto.getRandomValues(array);
+  return Array.from(array, (byte) => chars[byte % chars.length]).join('');
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -27,9 +35,30 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const origin = req.headers.get("origin") || "https://kxvearksrjbcmxqzikki.lovableproject.com";
+    // Production URL for back_urls
+    const productionUrl = "https://horoscopodagabi.vercel.app";
 
-    // Create Mercado Pago preference
+    // Generate order_id and access_token
+    const orderId = crypto.randomUUID();
+    const orderAccessToken = generateAccessToken();
+
+    // Create order in database first
+    const { error: orderError } = await supabase.from("orders").insert({
+      order_id: orderId,
+      access_token: orderAccessToken,
+      email: email,
+      birth_data: birthData,
+      status: "pending",
+    });
+
+    if (orderError) {
+      console.error("Order creation error:", orderError);
+      throw new Error("Erro ao criar pedido");
+    }
+
+    console.log("Order created:", { orderId, email });
+
+    // Create Mercado Pago preference with correct back_urls
     const preferenceData = {
       items: [
         {
@@ -44,16 +73,16 @@ serve(async (req) => {
         email: email,
       },
       back_urls: {
-        success: `${origin}/mapa-astral/resultado`,
-        failure: `${origin}/mapa-astral/pagamento`,
-        pending: `${origin}/mapa-astral/resultado`,
+        success: `${productionUrl}/pagamento/sucesso?order=${orderId}`,
+        failure: `${productionUrl}/pagamento/erro?order=${orderId}`,
+        pending: `${productionUrl}/pagamento/aguardando?order=${orderId}`,
       },
       auto_return: "approved",
-      external_reference: crypto.randomUUID(),
+      external_reference: orderId,
       notification_url: `${supabaseUrl}/functions/v1/mercado-pago-webhook`,
     };
 
-    console.log("Creating Mercado Pago preference...", { email, external_reference: preferenceData.external_reference });
+    console.log("Creating Mercado Pago preference...", { email, external_reference: orderId });
 
     const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
       method: "POST",
@@ -73,22 +102,9 @@ serve(async (req) => {
     const preference = await mpResponse.json();
     console.log("Preference created:", { id: preference.id, init_point: preference.init_point });
 
-    // Store session in database with external_reference as session_id
-    const { error: dbError } = await supabase.from("checkout_sessions").insert({
-      session_id: preferenceData.external_reference,
-      email: email,
-      birth_data: birthData,
-      status: "pending",
-    });
-
-    if (dbError) {
-      console.error("Database error:", dbError);
-      throw new Error("Erro ao salvar sessão");
-    }
-
     return new Response(JSON.stringify({ 
       url: preference.init_point,
-      session_id: preferenceData.external_reference 
+      order_id: orderId 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
