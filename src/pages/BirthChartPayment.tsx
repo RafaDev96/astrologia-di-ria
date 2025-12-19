@@ -9,11 +9,13 @@ import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { PixExplanationModal } from '@/components/PixExplanationModal';
 
 export default function BirthChartPayment() {
   const navigate = useNavigate();
   const { user, profile, isPremium, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPixModal, setShowPixModal] = useState(false);
 
   // If user is already premium, redirect to result page (which will show full content)
   useEffect(() => {
@@ -28,14 +30,19 @@ export default function BirthChartPayment() {
     }
   }, [authLoading, isPremium, navigate]);
 
-  const handleMercadoPagoCheckout = async () => {
+  const handlePaymentClick = () => {
     // Must be logged in
     if (!user) {
       toast.error('Você precisa estar logado para comprar');
       navigate('/login');
       return;
     }
+    
+    // Show the Pix explanation modal
+    setShowPixModal(true);
+  };
 
+  const handleMercadoPagoCheckout = async () => {
     setIsLoading(true);
 
     try {
@@ -64,9 +71,9 @@ export default function BirthChartPayment() {
 
       const { data, error } = await supabase.functions.invoke('create-checkout', {
         body: { 
-          email: user.email,
+          email: user!.email,
           birthData: birthDataParsed,
-          userId: user.id
+          userId: user!.id
         }
       });
 
@@ -86,6 +93,7 @@ export default function BirthChartPayment() {
       toast.error('Erro ao processar. Tente novamente.');
     } finally {
       setIsLoading(false);
+      setShowPixModal(false);
     }
   };
 
@@ -192,7 +200,7 @@ export default function BirthChartPayment() {
                   
                   <Button 
                     size="lg" 
-                    onClick={handleMercadoPagoCheckout}
+                    onClick={handlePaymentClick}
                     disabled={isLoading}
                     className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-display text-lg"
                   >
@@ -204,7 +212,7 @@ export default function BirthChartPayment() {
                     ) : (
                       <>
                         <CreditCard className="w-5 h-5 mr-2" />
-                        Pagar com PIX ou Cartão
+                        Adquirir Mapa Astral Completo
                       </>
                     )}
                   </Button>
@@ -263,6 +271,14 @@ export default function BirthChartPayment() {
         </main>
         <Footer />
       </div>
+
+      {/* Pix Explanation Modal */}
+      <PixExplanationModal
+        open={showPixModal}
+        onOpenChange={setShowPixModal}
+        onConfirm={handleMercadoPagoCheckout}
+        isLoading={isLoading}
+      />
     </>
   );
 }

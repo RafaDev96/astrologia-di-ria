@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Loader2, CheckCircle, Clock, RefreshCw } from "lucide-react";
@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { toast } from "sonner";
 
 export default function PostPayment() {
   const navigate = useNavigate();
   const { user, isPremium, loading, refreshProfile } = useAuth();
   const [isChecking, setIsChecking] = useState(true);
   const [checkCount, setCheckCount] = useState(0);
+  const hasShownToast = useRef(false);
 
   useEffect(() => {
     // If not logged in, redirect to login
@@ -20,8 +22,15 @@ export default function PostPayment() {
       return;
     }
 
-    // If already premium, redirect to full chart
+    // If already premium, show toast and redirect to full chart
     if (isPremium) {
+      if (!hasShownToast.current) {
+        hasShownToast.current = true;
+        toast.success("Pagamento confirmado! Seu Mapa Astral Completo foi liberado.", {
+          duration: 5000,
+          icon: "✅",
+        });
+      }
       setTimeout(() => {
         navigate("/mapa-completo");
       }, 1500);
@@ -61,6 +70,13 @@ export default function PostPayment() {
   // Handle redirect when premium is activated
   useEffect(() => {
     if (isPremium) {
+      if (!hasShownToast.current) {
+        hasShownToast.current = true;
+        toast.success("Pagamento confirmado! Seu Mapa Astral Completo foi liberado.", {
+          duration: 5000,
+          icon: "✅",
+        });
+      }
       setTimeout(() => {
         navigate("/mapa-completo");
       }, 1500);
