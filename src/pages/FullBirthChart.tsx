@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, Lock, Star, Save, ChevronLeft, Sparkles, Globe, Home, Users, Eye } from "lucide-react";
+import { Loader2, Lock, Star, Save, ChevronLeft, Sparkles, Globe, Home, Users, Eye, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
@@ -12,6 +12,7 @@ import HousesTab from "@/components/tabs/HousesTab";
 import AspectsTab from "@/components/tabs/AspectsTab";
 import VisualsTab from "@/components/tabs/VisualsTab";
 import { calculateBirthChart, ChartData, BirthData } from "@/utils/astroCalculations";
+import { generateChartPDF } from "@/utils/generateChartPDF";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedCharts, SavedChart } from "@/hooks/useSavedCharts";
 import { toast } from "sonner";
@@ -25,6 +26,7 @@ const FullBirthChart = () => {
   const [birthData, setBirthData] = useState<any>(null);
   const [viewingSavedChart, setViewingSavedChart] = useState<SavedChart | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const { savedCharts, saveChart, canCreateChart, remainingCharts } = useSavedCharts();
 
   useEffect(() => {
@@ -118,6 +120,25 @@ const FullBirthChart = () => {
     
     if (!success && !canCreateChart) {
       toast.error(`Você atingiu o limite de 2 mapas. Adquira um novo pacote para criar mais.`);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!chartData || !birthInfo) return;
+    
+    setIsGeneratingPDF(true);
+    try {
+      await generateChartPDF({
+        chartData,
+        userName: birthInfo.name,
+        birthPlace: birthInfo.birthPlace
+      });
+      toast.success('PDF gerado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      toast.error('Erro ao gerar PDF. Tente novamente.');
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -285,6 +306,19 @@ const FullBirthChart = () => {
             {!viewingSavedChart && isChartSaved && (
               <p className="text-green-400 text-sm pt-4">✓ Mapa já salvo na sua conta</p>
             )}
+
+            {/* Download PDF Button */}
+            <div className="pt-4">
+              <Button
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF}
+                variant="outline"
+                className="border-primary/50 hover:bg-primary/10"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isGeneratingPDF ? 'Gerando PDF...' : 'Baixar Resumo em PDF'}
+              </Button>
+            </div>
           </div>
 
           {/* Navigation Tabs */}
