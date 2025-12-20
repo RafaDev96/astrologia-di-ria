@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, Lock, Star, Save, ChevronLeft, BookOpen, Sparkles } from "lucide-react";
+import { Loader2, Lock, Star, Save, ChevronLeft, Sparkles, Globe, Home, Users, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import ZodiacWheel from "@/components/ZodiacWheel";
-import ArtisticMandala from "@/components/ArtisticMandala";
-import ChartInterpretation from "@/components/ChartInterpretation";
-import PlanetaryAspects from "@/components/PlanetaryAspects";
+import EssenceTab from "@/components/tabs/EssenceTab";
+import PlanetsTab from "@/components/tabs/PlanetsTab";
+import HousesTab from "@/components/tabs/HousesTab";
+import AspectsTab from "@/components/tabs/AspectsTab";
+import VisualsTab from "@/components/tabs/VisualsTab";
 import { calculateBirthChart, ChartData, BirthData } from "@/utils/astroCalculations";
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedCharts, SavedChart } from "@/hooks/useSavedCharts";
@@ -219,9 +220,6 @@ const FullBirthChart = () => {
     );
   }
 
-  // Get sun, moon from chart data
-  const sunPlanet = chartData.planets.find(p => p.planet === 'Sol');
-  const moonPlanet = chartData.planets.find(p => p.planet === 'Lua');
 
   return (
     <div className="min-h-screen bg-gradient-cosmic flex flex-col">
@@ -289,103 +287,49 @@ const FullBirthChart = () => {
             )}
           </div>
 
-          {/* Big Three Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-card/50 rounded-lg p-6 text-center border border-primary/20">
-              <p className="text-sm text-muted-foreground mb-1">Sol</p>
-              <p className="text-2xl font-display text-gradient-gold">{sunPlanet?.sign}</p>
-              <p className="text-xs text-muted-foreground">{sunPlanet?.degree.toFixed(1)}°</p>
-            </div>
-            <div className="bg-card/50 rounded-lg p-6 text-center border border-primary/20">
-              <p className="text-sm text-muted-foreground mb-1">Lua</p>
-              <p className="text-2xl font-display text-gradient-gold">{moonPlanet?.sign}</p>
-              <p className="text-xs text-muted-foreground">{moonPlanet?.degree.toFixed(1)}°</p>
-            </div>
-            <div className="bg-card/50 rounded-lg p-6 text-center border border-primary/20">
-              <p className="text-sm text-muted-foreground mb-1">Ascendente</p>
-              <p className="text-2xl font-display text-gradient-gold">{chartData.ascendant.sign}</p>
-              <p className="text-xs text-muted-foreground">{chartData.ascendant.degree.toFixed(1)}°</p>
-            </div>
-          </div>
-
-          {/* Visualizations */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-4">
-              <h2 className="text-xl font-display text-foreground text-center">
-                Mapa Tradicional
-              </h2>
-              <ZodiacWheel chartData={chartData} />
-            </div>
-            <div className="space-y-4">
-              <h2 className="text-xl font-display text-foreground text-center">
-                Mandala Artística
-              </h2>
-              <ArtisticMandala chartData={chartData} />
-            </div>
-          </div>
-
-          {/* Complete Planets */}
-          <div className="bg-card/50 rounded-lg p-6 border border-primary/20">
-            <h2 className="text-xl font-display text-foreground mb-4">
-              Todos os Planetas
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {chartData.planets.map((planet) => (
-                <div key={planet.planet} className="text-center p-3 bg-muted/30 rounded-lg">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {planet.planet}
-                  </p>
-                  <p className="font-semibold text-primary">{planet.sign}</p>
-                  <p className="text-xs text-muted-foreground">{planet.degree.toFixed(1)}°</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Houses */}
-          <div className="bg-card/50 rounded-lg p-6 border border-primary/20">
-            <h2 className="text-xl font-display text-foreground mb-4">
-              Casas Astrológicas
-            </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {chartData.houses.map((houseDegree, index) => {
-                const sign = getSignFromDegree(houseDegree);
-                return (
-                  <div key={index} className="text-center p-3 bg-muted/30 rounded-lg">
-                    <p className="text-xs text-muted-foreground mb-1">Casa {index + 1}</p>
-                    <p className="font-semibold text-primary">{sign}</p>
-                    <p className="text-xs text-muted-foreground">{houseDegree.toFixed(1)}°</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Tabs for Interpretation and Planetary Aspects */}
-          <Tabs defaultValue="interpretation" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="interpretation" className="gap-2">
-                <BookOpen className="w-4 h-4" />
-                Interpretação
+          {/* Navigation Tabs */}
+          <Tabs defaultValue="essence" className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-6 h-auto">
+              <TabsTrigger value="essence" className="flex flex-col gap-1 py-3">
+                <Star className="w-4 h-4" />
+                <span className="text-xs">Essência</span>
               </TabsTrigger>
-              <TabsTrigger value="aspects" className="gap-2">
+              <TabsTrigger value="planets" className="flex flex-col gap-1 py-3">
+                <Globe className="w-4 h-4" />
+                <span className="text-xs">Planetas</span>
+              </TabsTrigger>
+              <TabsTrigger value="houses" className="flex flex-col gap-1 py-3">
+                <Home className="w-4 h-4" />
+                <span className="text-xs">Casas</span>
+              </TabsTrigger>
+              <TabsTrigger value="aspects" className="flex flex-col gap-1 py-3">
                 <Sparkles className="w-4 h-4" />
-                Aspectos Planetários
+                <span className="text-xs">Aspectos</span>
+              </TabsTrigger>
+              <TabsTrigger value="visuals" className="flex flex-col gap-1 py-3">
+                <Eye className="w-4 h-4" />
+                <span className="text-xs">Visuais</span>
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="interpretation">
-              <ChartInterpretation chartData={chartData} userName={birthInfo?.name} />
+            <TabsContent value="essence">
+              <EssenceTab chartData={chartData} userName={birthInfo?.name} />
+            </TabsContent>
+            
+            <TabsContent value="planets">
+              <PlanetsTab chartData={chartData} />
+            </TabsContent>
+            
+            <TabsContent value="houses">
+              <HousesTab chartData={chartData} />
             </TabsContent>
             
             <TabsContent value="aspects">
-              {chartData.aspects && chartData.aspects.length > 0 ? (
-                <PlanetaryAspects aspects={chartData.aspects} />
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Nenhum aspecto encontrado no seu mapa.</p>
-                </div>
-              )}
+              <AspectsTab chartData={chartData} />
+            </TabsContent>
+            
+            <TabsContent value="visuals">
+              <VisualsTab chartData={chartData} />
             </TabsContent>
           </Tabs>
         </div>
