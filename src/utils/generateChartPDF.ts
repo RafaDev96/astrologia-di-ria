@@ -4,14 +4,35 @@ import { signElements } from '@/data/astrologyData';
 import { bigSixInterpretations, deepElementInterpretations } from '@/data/bigSixInterpretations';
 import { houseInterpretations, getSignInfluenceForHouse } from '@/data/houseInterpretations';
 
+function parseISODateOnly(iso: string): Date {
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+function formatBirthDatePtBR(dateValue: unknown, birthDateISO?: string): string {
+  const raw = (birthDateISO ?? dateValue) as any;
+  if (typeof raw === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return parseISODateOnly(raw).toLocaleDateString('pt-BR');
+  }
+  const d = raw instanceof Date ? raw : new Date(raw);
+  return d.toLocaleDateString('pt-BR');
+}
+
 interface PDFOptions {
   chartData: ChartData;
   userName: string;
   birthPlace: string;
   isPremium?: boolean;
+  birthDateISO?: string;
 }
 
-export async function generateChartPDF({ chartData, userName, birthPlace, isPremium = false }: PDFOptions): Promise<void> {
+export async function generateChartPDF({
+  chartData,
+  userName,
+  birthPlace,
+  isPremium = false,
+  birthDateISO,
+}: PDFOptions): Promise<void> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;
@@ -19,7 +40,7 @@ export async function generateChartPDF({ chartData, userName, birthPlace, isPrem
 
   // If not premium, generate simplified PDF
   if (!isPremium) {
-    return generateSimplifiedPDF(doc, chartData, userName, birthPlace);
+    return generateSimplifiedPDF(doc, chartData, userName, birthPlace, birthDateISO);
   }
 
   // Helper functions
@@ -90,7 +111,7 @@ export async function generateChartPDF({ chartData, userName, birthPlace, isPrem
   doc.setTextColor(255, 255, 255);
   centerText(userName, 32, 18);
   
-  const birthDate = new Date(chartData.birthData.date).toLocaleDateString('pt-BR');
+  const birthDate = formatBirthDatePtBR(chartData.birthData.date, birthDateISO);
   centerText(`${birthDate} às ${chartData.birthData.time}`, 44, 11);
   centerText(birthPlace, 52, 10);
   
@@ -353,7 +374,13 @@ export async function generateChartPDF({ chartData, userName, birthPlace, isPrem
 }
 
 // Simplified PDF for free users
-function generateSimplifiedPDF(doc: jsPDF, chartData: ChartData, userName: string, birthPlace: string): void {
+function generateSimplifiedPDF(
+  doc: jsPDF,
+  chartData: ChartData,
+  userName: string,
+  birthPlace: string,
+  birthDateISO?: string
+): void {
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;
   let yPos = 20;
@@ -385,7 +412,7 @@ function generateSimplifiedPDF(doc: jsPDF, chartData: ChartData, userName: strin
   doc.setTextColor(255, 255, 255);
   centerText(userName, 32, 18);
   
-  const birthDate = new Date(chartData.birthData.date).toLocaleDateString('pt-BR');
+  const birthDate = formatBirthDatePtBR(chartData.birthData.date, birthDateISO);
   centerText(`${birthDate} às ${chartData.birthData.time}`, 44, 11);
   centerText(birthPlace, 52, 10);
   
