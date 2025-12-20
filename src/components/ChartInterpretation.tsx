@@ -6,6 +6,7 @@ import {
   signElements,
   aspects as aspectData
 } from '@/data/astrologyData';
+import { houseInterpretations, getSignInfluenceForHouse } from '@/data/houseInterpretations';
 import { 
   Accordion, 
   AccordionContent, 
