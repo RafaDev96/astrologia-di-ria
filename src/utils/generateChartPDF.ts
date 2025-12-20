@@ -1,6 +1,8 @@
 import jsPDF from 'jspdf';
 import { ChartData } from './astroCalculations';
 import { signElements } from '@/data/astrologyData';
+import { bigSixInterpretations, deepElementInterpretations } from '@/data/bigSixInterpretations';
+import { houseInterpretations, getSignInfluenceForHouse } from '@/data/houseInterpretations';
 
 interface PDFOptions {
   chartData: ChartData;
@@ -21,125 +23,323 @@ export async function generateChartPDF({ chartData, userName, birthPlace }: PDFO
   };
 
   const addSection = (title: string) => {
-    yPos += 15;
+    if (yPos > 250) {
+      doc.addPage();
+      yPos = 20;
+    }
+    yPos += 12;
     doc.setFontSize(14);
-    doc.setTextColor(139, 92, 246); // Primary purple
+    doc.setTextColor(139, 92, 246);
     doc.text(title, margin, yPos);
     doc.setTextColor(0, 0, 0);
     yPos += 8;
   };
 
-  const addLine = (text: string, indent: number = 0) => {
-    doc.setFontSize(10);
+  const addSubSection = (title: string) => {
+    if (yPos > 260) {
+      doc.addPage();
+      yPos = 20;
+    }
+    yPos += 8;
+    doc.setFontSize(11);
+    doc.setTextColor(100, 100, 100);
+    doc.text(title, margin, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 6;
+  };
+
+  const addLine = (text: string, indent: number = 0, fontSize: number = 10) => {
+    doc.setFontSize(fontSize);
     const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - indent);
     lines.forEach((line: string) => {
-      if (yPos > 270) {
+      if (yPos > 275) {
         doc.addPage();
         yPos = 20;
       }
       doc.text(line, margin + indent, yPos);
-      yPos += 5;
+      yPos += fontSize * 0.45;
     });
+  };
+
+  const addBoldLine = (label: string, value: string, indent: number = 0) => {
+    if (yPos > 275) {
+      doc.addPage();
+      yPos = 20;
+    }
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(label, margin + indent, yPos);
+    const labelWidth = doc.getTextWidth(label);
+    doc.setFont('helvetica', 'normal');
+    doc.text(value, margin + indent + labelWidth + 2, yPos);
+    yPos += 5;
   };
 
   // Header
   doc.setFillColor(30, 27, 75);
-  doc.rect(0, 0, pageWidth, 50, 'F');
+  doc.rect(0, 0, pageWidth, 55, 'F');
   
+  doc.setTextColor(255, 215, 0);
+  centerText('MAPA ASTRAL COMPLETO', 18, 22);
   doc.setTextColor(255, 255, 255);
-  centerText('MAPA ASTRAL COMPLETO', 20, 22);
-  centerText(userName, 32, 16);
+  centerText(userName, 32, 18);
   
   const birthDate = new Date(chartData.birthData.date).toLocaleDateString('pt-BR');
-  centerText(`${birthDate} às ${chartData.birthData.time} - ${birthPlace}`, 42, 10);
+  centerText(`${birthDate} às ${chartData.birthData.time}`, 44, 11);
+  centerText(birthPlace, 52, 10);
   
   doc.setTextColor(0, 0, 0);
-  yPos = 60;
+  yPos = 65;
 
-  // Big Six Section
-  addSection('✨ SUA ESSÊNCIA ASTROLÓGICA');
+  // ========== BIG SIX SECTION ==========
+  addSection('✨ SUA ESSÊNCIA ASTROLÓGICA - O BIG SIX');
   
-  const sunSign = chartData.planets.find(p => p.planet === 'Sol')?.sign || '-';
-  const moonSign = chartData.planets.find(p => p.planet === 'Lua')?.sign || '-';
+  const sunSign = chartData.planets.find(p => p.planet === 'Sol')?.sign || '';
+  const moonSign = chartData.planets.find(p => p.planet === 'Lua')?.sign || '';
+
+  // Sun interpretation
+  const sunInterp = bigSixInterpretations.sun;
+  const sunSignInterp = sunInterp.signInterpretations[sunSign as keyof typeof sunInterp.signInterpretations];
   
-  addLine(`☀️ Sol em ${sunSign} - Sua identidade, ego e propósito de vida`, 5);
-  addLine(`🌙 Lua em ${moonSign} - Suas emoções, instintos e vida interior`, 5);
-  addLine(`⬆️ Ascendente em ${chartData.ascendant.sign} - Como você se apresenta ao mundo`, 5);
-  addLine(`⭐ Meio do Céu em ${chartData.midheaven.sign} - Sua carreira e imagem pública`, 5);
+  addSubSection(`☀️ SOL EM ${sunSign.toUpperCase()} - ${sunInterp.archetype}`);
+  addLine(sunInterp.deepMeaning, 5, 9);
+  yPos += 3;
+  if (sunSignInterp) {
+    addLine(`Sua essência: ${sunSignInterp.essence}`, 5, 9);
+    yPos += 2;
+    addBoldLine('Forças: ', sunSignInterp.strengths, 5);
+    addBoldLine('Desafios: ', sunSignInterp.challenges, 5);
+    addBoldLine('Lição de vida: ', sunSignInterp.lifeLesson, 5);
+  }
+
+  // Moon interpretation
+  const moonInterp = bigSixInterpretations.moon;
+  const moonSignInterp = moonInterp.signInterpretations[moonSign as keyof typeof moonInterp.signInterpretations];
+  
+  yPos += 5;
+  addSubSection(`🌙 LUA EM ${moonSign.toUpperCase()} - ${moonInterp.archetype}`);
+  addLine(moonInterp.deepMeaning, 5, 9);
+  yPos += 3;
+  if (moonSignInterp) {
+    addLine(`Sua essência emocional: ${moonSignInterp.essence}`, 5, 9);
+    yPos += 2;
+    addBoldLine('Forças: ', moonSignInterp.strengths, 5);
+    addBoldLine('Desafios: ', moonSignInterp.challenges, 5);
+    addBoldLine('Lição de vida: ', moonSignInterp.lifeLesson, 5);
+  }
+
+  // Ascendant interpretation
+  const ascInterp = bigSixInterpretations.ascendant;
+  const ascSign = chartData.ascendant.sign;
+  const ascSignInterp = ascInterp.signInterpretations[ascSign as keyof typeof ascInterp.signInterpretations];
+  
+  yPos += 5;
+  addSubSection(`⬆️ ASCENDENTE EM ${ascSign.toUpperCase()} - ${ascInterp.archetype}`);
+  addLine(ascInterp.deepMeaning, 5, 9);
+  yPos += 3;
+  if (ascSignInterp) {
+    addLine(`Como você se apresenta: ${ascSignInterp.essence}`, 5, 9);
+    yPos += 2;
+    addBoldLine('Forças: ', ascSignInterp.strengths, 5);
+    addBoldLine('Desafios: ', ascSignInterp.challenges, 5);
+    addBoldLine('Lição de vida: ', ascSignInterp.lifeLesson, 5);
+  }
+
+  // Midheaven interpretation
+  const mcInterp = bigSixInterpretations.midheaven;
+  const mcSign = chartData.midheaven.sign;
+  const mcSignInterp = mcInterp.signInterpretations[mcSign as keyof typeof mcInterp.signInterpretations];
+  
+  yPos += 5;
+  addSubSection(`⭐ MEIO DO CÉU EM ${mcSign.toUpperCase()} - ${mcInterp.archetype}`);
+  addLine(mcInterp.deepMeaning, 5, 9);
+  yPos += 3;
+  if (mcSignInterp) {
+    addLine(`Sua vocação: ${mcSignInterp.essence}`, 5, 9);
+    yPos += 2;
+    addBoldLine('Forças: ', mcSignInterp.strengths, 5);
+    addBoldLine('Desafios: ', mcSignInterp.challenges, 5);
+    addBoldLine('Lição de vida: ', mcSignInterp.lifeLesson, 5);
+  }
+
+  // Descendant interpretation
   if (chartData.descendant) {
-    addLine(`⬇️ Descendente em ${chartData.descendant.sign} - Suas parcerias e relacionamentos`, 5);
-  }
-  if (chartData.imumCoeli) {
-    addLine(`🌑 Fundo do Céu em ${chartData.imumCoeli.sign} - Suas raízes e vida privada`, 5);
+    const dcInterp = bigSixInterpretations.descendant;
+    const dcSign = chartData.descendant.sign;
+    const dcSignInterp = dcInterp.signInterpretations[dcSign as keyof typeof dcInterp.signInterpretations];
+    
+    yPos += 5;
+    addSubSection(`⬇️ DESCENDENTE EM ${dcSign.toUpperCase()} - ${dcInterp.archetype}`);
+    addLine(dcInterp.deepMeaning, 5, 9);
+    yPos += 3;
+    if (dcSignInterp) {
+      addLine(`Nas parcerias: ${dcSignInterp.essence}`, 5, 9);
+      yPos += 2;
+      addBoldLine('Forças: ', dcSignInterp.strengths, 5);
+      addBoldLine('Desafios: ', dcSignInterp.challenges, 5);
+      addBoldLine('Lição de vida: ', dcSignInterp.lifeLesson, 5);
+    }
   }
 
-  // Element Distribution
+  // Imum Coeli interpretation
+  if (chartData.imumCoeli) {
+    const icInterp = bigSixInterpretations.imumCoeli;
+    const icSign = chartData.imumCoeli.sign;
+    const icSignInterp = icInterp.signInterpretations[icSign as keyof typeof icInterp.signInterpretations];
+    
+    yPos += 5;
+    addSubSection(`🌑 FUNDO DO CÉU EM ${icSign.toUpperCase()} - ${icInterp.archetype}`);
+    addLine(icInterp.deepMeaning, 5, 9);
+    yPos += 3;
+    if (icSignInterp) {
+      addLine(`Suas raízes: ${icSignInterp.essence}`, 5, 9);
+      yPos += 2;
+      addBoldLine('Forças: ', icSignInterp.strengths, 5);
+      addBoldLine('Desafios: ', icSignInterp.challenges, 5);
+      addBoldLine('Lição de vida: ', icSignInterp.lifeLesson, 5);
+    }
+  }
+
+  // ========== ELEMENT DISTRIBUTION ==========
   const elementCounts: Record<string, number> = { Fogo: 0, Terra: 0, Ar: 0, Água: 0 };
   chartData.planets.forEach(planet => {
     const element = signElements[planet.sign];
     if (element) elementCounts[element]++;
   });
   const dominantElement = Object.entries(elementCounts).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+  const elementInfo = deepElementInterpretations[dominantElement as keyof typeof deepElementInterpretations];
 
-  addSection('🔮 DISTRIBUIÇÃO DOS ELEMENTOS');
-  addLine(`Fogo: ${elementCounts.Fogo} | Terra: ${elementCounts.Terra} | Ar: ${elementCounts.Ar} | Água: ${elementCounts.Água}`, 5);
-  addLine(`Elemento Dominante: ${dominantElement}`, 5);
+  yPos += 8;
+  addSection(`🔮 SEU ELEMENTO DOMINANTE: ${dominantElement.toUpperCase()}`);
+  addLine(`Distribuição: Fogo (${elementCounts.Fogo}) | Terra (${elementCounts.Terra}) | Ar (${elementCounts.Ar}) | Água (${elementCounts.Água})`, 5, 9);
+  yPos += 5;
+  
+  if (elementInfo) {
+    addSubSection(`${elementInfo.symbol} ${elementInfo.archetype}`);
+    addLine(elementInfo.essence, 5, 9);
+    yPos += 3;
+    
+    addBoldLine('Dons: ', elementInfo.gifts.join('; '), 5);
+    yPos += 2;
+    addBoldLine('Sombras: ', elementInfo.shadows.join('; '), 5);
+    yPos += 2;
+    addLine(`Como equilibrar: ${elementInfo.howToBalance}`, 5, 9);
+  }
 
-  // Planets Section
+  // ========== PLANETS SECTION ==========
+  yPos += 8;
   addSection('🪐 POSIÇÃO DOS PLANETAS');
+  
   chartData.planets.forEach(planet => {
     const degree = Math.floor(planet.degree % 30);
     const minutes = Math.floor((planet.degree % 1) * 60);
-    addLine(`${planet.planet}: ${planet.sign} ${degree}°${minutes}'`, 5);
+    const houseInfo = planet.house ? ` (Casa ${planet.house})` : '';
+    addLine(`${planet.planet}: ${planet.sign} ${degree}°${minutes}'${houseInfo}`, 5, 10);
   });
 
-  // Houses Section
-  addSection('🏠 CASAS ASTROLÓGICAS');
+  // ========== HOUSES SECTION ==========
+  yPos += 8;
+  addSection('🏠 CASAS ASTROLÓGICAS - INTERPRETAÇÕES');
+  
   const signs = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 
                  'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'];
-  chartData.houses.forEach((houseDegree, index) => {
+  
+  // Show first 6 houses with interpretations (others on demand due to space)
+  chartData.houses.slice(0, 12).forEach((houseDegree, index) => {
     const houseNumber = index + 1;
     const normalized = ((houseDegree % 360) + 360) % 360;
     const signIndex = Math.floor(normalized / 30);
+    const cuspSign = signs[signIndex];
     const degreeInSign = Math.floor(normalized % 30);
-    const minutes = Math.floor((normalized % 1) * 60);
-    addLine(`Casa ${houseNumber}: ${signs[signIndex]} ${degreeInSign}°${minutes}'`, 5);
+    
+    const houseInterp = houseInterpretations.find(h => h.number === houseNumber);
+    const signInfluence = getSignInfluenceForHouse(houseNumber, cuspSign);
+    const planetsInHouse = chartData.planets.filter(p => p.house === houseNumber);
+    
+    if (houseInterp) {
+      addSubSection(`Casa ${houseNumber}: ${houseInterp.title} - ${cuspSign} ${degreeInSign}°`);
+      
+      // Show archetype and keywords
+      addLine(`Arquétipo: ${houseInterp.archetype} | Regente: ${houseInterp.naturalRuler}`, 5, 8);
+      addLine(`Palavras-chave: ${houseInterp.keywords.join(', ')}`, 5, 8);
+      yPos += 2;
+      
+      // Show personalized interpretation
+      if (signInfluence) {
+        addLine(signInfluence, 5, 9);
+      }
+      
+      // Show planets in house if any
+      if (planetsInHouse.length > 0) {
+        const planetsList = planetsInHouse.map(p => `${p.planet} em ${p.sign}`).join(', ');
+        addLine(`Planetas nesta casa: ${planetsList}`, 5, 9);
+      }
+      
+      yPos += 3;
+    }
   });
 
-  // Aspects Section
+  // ========== ASPECTS SECTION ==========
   if (chartData.aspects && chartData.aspects.length > 0) {
+    yPos += 8;
     addSection('✨ ASPECTOS PRINCIPAIS');
-    const mainAspects = chartData.aspects.slice(0, 15);
+    
+    const aspectDescriptions: Record<string, string> = {
+      'Conjunção': 'fusão de energias',
+      'Sextil': 'oportunidade harmônica',
+      'Quadratura': 'tensão criativa',
+      'Trígono': 'fluxo natural',
+      'Oposição': 'polaridade consciente'
+    };
+    
+    const mainAspects = chartData.aspects.slice(0, 12);
     mainAspects.forEach(aspect => {
-      addLine(`${aspect.planet1} ${aspect.type} ${aspect.planet2} (${aspect.orb.toFixed(1)}°)`, 5);
+      const desc = aspectDescriptions[aspect.type] || '';
+      addLine(`${aspect.planet1} ${aspect.type} ${aspect.planet2} (${aspect.orb.toFixed(1)}°) - ${desc}`, 5, 9);
     });
-    if (chartData.aspects.length > 15) {
-      addLine(`... e mais ${chartData.aspects.length - 15} aspectos`, 5);
+    
+    if (chartData.aspects.length > 12) {
+      addLine(`... e mais ${chartData.aspects.length - 12} aspectos no seu mapa`, 5, 9);
     }
   }
 
-  // Footer
+  // ========== FINAL PAGE - GUIDANCE ==========
   doc.addPage();
   yPos = 20;
   
   doc.setFillColor(30, 27, 75);
-  doc.rect(0, 0, pageWidth, 40, 'F');
+  doc.rect(0, 0, pageWidth, 45, 'F');
+  doc.setTextColor(255, 215, 0);
+  centerText('ORIENTAÇÕES PARA SUA JORNADA', 18, 16);
   doc.setTextColor(255, 255, 255);
-  centerText('SOBRE SEU MAPA ASTRAL', 20, 16);
+  centerText('Como usar este mapa para seu crescimento pessoal', 32, 11);
   doc.setTextColor(0, 0, 0);
-  yPos = 50;
+  yPos = 55;
 
-  addLine('Este mapa astral foi calculado com base na sua data, hora e local de nascimento. Ele representa um instantâneo do céu no momento exato em que você nasceu, revelando tendências e potenciais únicos da sua personalidade.');
-  yPos += 10;
-  addLine('Lembre-se: a astrologia é uma ferramenta de autoconhecimento. Os astros inclinam, mas não determinam. Você tem o poder de escolha e pode usar essas informações para seu desenvolvimento pessoal.');
+  addSubSection('📌 PONTOS IMPORTANTES PARA LEMBRAR');
+  addLine('• Seu Sol mostra quem você está se tornando - não quem você já é. É uma jornada de vida.', 5, 9);
+  addLine('• Sua Lua revela suas necessidades emocionais profundas. Honrá-las é essencial para bem-estar.', 5, 9);
+  addLine('• O Ascendente é sua porta de entrada para o mundo. Use-o conscientemente.', 5, 9);
+  addLine('• O Meio do Céu indica sua vocação - alinhe sua carreira com essa energia.', 5, 9);
+  addLine('• Os desafios (sombras) são tão importantes quanto as forças - são áreas de crescimento.', 5, 9);
   
-  yPos += 20;
-  doc.setFontSize(10);
+  yPos += 8;
+  addSubSection('🌱 PRÓXIMOS PASSOS');
+  addLine('1. Reflita sobre as perguntas de cada seção do seu mapa astral completo online.', 5, 9);
+  addLine('2. Observe como as energias descritas se manifestam no seu dia a dia.', 5, 9);
+  addLine('3. Trabalhe conscientemente com os caminhos de crescimento sugeridos.', 5, 9);
+  addLine('4. Lembre-se: os astros inclinam, mas não determinam. Você tem poder de escolha.', 5, 9);
+  
+  yPos += 10;
+  addLine('Este mapa astral foi calculado com base na sua data, hora e local de nascimento exatos. Ele representa um instantâneo do céu no momento em que você nasceu, revelando tendências, potenciais e oportunidades de crescimento únicos da sua jornada.', 0, 9);
+  
+  yPos += 15;
+  doc.setFontSize(11);
   doc.setTextColor(139, 92, 246);
-  centerText('Gerado por Horóscopo da Gabi', yPos, 12);
+  centerText('✨ Gerado por Horóscopo da Gabi ✨', yPos, 12);
   yPos += 8;
   doc.setTextColor(128, 128, 128);
-  centerText(new Date().toLocaleDateString('pt-BR'), yPos, 10);
+  centerText(`Criado em ${new Date().toLocaleDateString('pt-BR')}`, yPos, 10);
 
   // Save the PDF
   const fileName = `mapa-astral-${userName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
