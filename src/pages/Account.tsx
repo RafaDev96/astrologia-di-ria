@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SavedChartsList from "@/components/SavedChartsList";
 
 export default function Account() {
   const navigate = useNavigate();
@@ -39,14 +40,14 @@ export default function Account() {
     <>
       <Helmet>
         <title>Minha Conta | Horóscopo da Gabi</title>
-        <meta name="description" content="Gerencie sua conta e acesse seu mapa astral." />
+        <meta name="description" content="Gerencie sua conta e acesse seus mapas astrais salvos." />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-cosmic flex flex-col">
         <Header />
 
         <main className="flex-1 py-12 px-4">
-          <div className="container mx-auto max-w-2xl space-y-6">
+          <div className="container mx-auto max-w-4xl space-y-6">
             {/* Header */}
             <div className="text-center">
               <div className="inline-flex items-center gap-2 mb-4">
@@ -102,6 +103,24 @@ export default function Account() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Saved Charts - Only for premium users */}
+            {isPremium && (
+              <Card className="bg-card/50 border-primary/20">
+                <CardHeader>
+                  <CardTitle className="font-display text-xl flex items-center gap-2">
+                    <Star className="w-5 h-5 text-primary" />
+                    Meus Mapas Astrais Salvos
+                  </CardTitle>
+                  <CardDescription>
+                    Você pode salvar até 2 mapas por pacote premium para analisar quando quiser.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <SavedChartsList />
+                </CardContent>
+              </Card>
+            )}
 
             {/* Quick Actions */}
             <Card className="bg-card/50 border-primary/20">

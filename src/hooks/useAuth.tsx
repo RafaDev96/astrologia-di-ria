@@ -7,6 +7,8 @@ interface UserProfile {
   is_premium: boolean;
   premium_activated_at: string | null;
   birth_data: any | null;
+  current_premium_id: string | null;
+  charts_created_count: number;
 }
 
 interface AuthContextType {

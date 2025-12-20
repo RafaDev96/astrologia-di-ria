@@ -77,10 +77,42 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_charts: {
+        Row: {
+          birth_data: Json
+          chart_data: Json
+          created_at: string
+          id: string
+          name: string
+          premium_purchase_id: string | null
+          user_id: string
+        }
+        Insert: {
+          birth_data: Json
+          chart_data: Json
+          created_at?: string
+          id?: string
+          name: string
+          premium_purchase_id?: string | null
+          user_id: string
+        }
+        Update: {
+          birth_data?: Json
+          chart_data?: Json
+          created_at?: string
+          id?: string
+          name?: string
+          premium_purchase_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           birth_data: Json | null
+          charts_created_count: number
           created_at: string
+          current_premium_id: string | null
           id: string
           is_premium: boolean
           mp_last_payment_id: string | null
@@ -90,7 +122,9 @@ export type Database = {
         }
         Insert: {
           birth_data?: Json | null
+          charts_created_count?: number
           created_at?: string
+          current_premium_id?: string | null
           id?: string
           is_premium?: boolean
           mp_last_payment_id?: string | null
@@ -100,7 +134,9 @@ export type Database = {
         }
         Update: {
           birth_data?: Json | null
+          charts_created_count?: number
           created_at?: string
+          current_premium_id?: string | null
           id?: string
           is_premium?: boolean
           mp_last_payment_id?: string | null

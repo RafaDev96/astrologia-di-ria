@@ -1,22 +1,28 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, Lock, Star } from "lucide-react";
+import { Loader2, Lock, Star, Save, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ZodiacWheel from "@/components/ZodiacWheel";
 import ArtisticMandala from "@/components/ArtisticMandala";
 import ChartInterpretation from "@/components/ChartInterpretation";
+import PlanetaryAspects from "@/components/PlanetaryAspects";
 import { calculateBirthChart, ChartData, BirthData } from "@/utils/astroCalculations";
 import { useAuth } from "@/hooks/useAuth";
-
+import { useSavedCharts, SavedChart } from "@/hooks/useSavedCharts";
+import { toast } from "sonner";
 const FullBirthChart = () => {
   const navigate = useNavigate();
   const { user, profile, isPremium, loading: authLoading, refreshProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [chartData, setChartData] = useState<ChartData | null>(null);
   const [birthInfo, setBirthInfo] = useState<{ name: string; birthPlace: string } | null>(null);
+  const [birthData, setBirthData] = useState<any>(null);
+  const [viewingSavedChart, setViewingSavedChart] = useState<SavedChart | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const { savedCharts, saveChart, canCreateChart, remainingCharts } = useSavedCharts();
 
   useEffect(() => {
     // Redirect if not logged in
@@ -33,6 +39,27 @@ const FullBirthChart = () => {
 
   useEffect(() => {
     const loadChart = async () => {
+      // Check if viewing a saved chart first
+      const savedChartData = sessionStorage.getItem('viewingSavedChart');
+      if (savedChartData) {
+        try {
+          const saved = JSON.parse(savedChartData) as SavedChart;
+          setViewingSavedChart(saved);
+          setChartData(saved.chart_data);
+          setBirthInfo({
+            name: saved.name,
+            birthPlace: saved.birth_data?.birthPlace || saved.birth_data?.city || ""
+          });
+          setBirthData(saved.birth_data);
+          sessionStorage.removeItem('viewingSavedChart');
+          setIsLoading(false);
+          return;
+        } catch (err) {
+          console.error("Error loading saved chart:", err);
+          sessionStorage.removeItem('viewingSavedChart');
+        }
+      }
+
       if (!isPremium || !profile?.birth_data) {
         setIsLoading(false);
         return;
@@ -44,9 +71,10 @@ const FullBirthChart = () => {
           name: data.name || "Seu Mapa", 
           birthPlace: data.birthPlace || data.city || ""
         });
+        setBirthData(data);
 
         // Build BirthData object
-        const birthData: BirthData = {
+        const birthDataObj: BirthData = {
           date: new Date(data.birthDate),
           time: data.birthTime,
           latitude: data.latitude,
@@ -55,7 +83,7 @@ const FullBirthChart = () => {
         };
 
         // Calculate the chart
-        const chart = await calculateBirthChart(birthData);
+        const chart = await calculateBirthChart(birthDataObj);
         setChartData(chart);
       } catch (err) {
         console.error("Error calculating chart:", err);
@@ -70,6 +98,25 @@ const FullBirthChart = () => {
       setIsLoading(false);
     }
   }, [authLoading, isPremium, profile]);
+
+  // Check if this chart is already saved
+  const isChartSaved = savedCharts.some(saved => 
+    saved.birth_data?.birthDate === birthData?.birthDate &&
+    saved.birth_data?.birthTime === birthData?.birthTime &&
+    saved.name === birthInfo?.name
+  );
+
+  const handleSaveChart = async () => {
+    if (!chartData || !birthData || !birthInfo) return;
+    
+    setIsSaving(true);
+    const success = await saveChart(birthInfo.name, birthData, chartData);
+    setIsSaving(false);
+    
+    if (!success && !canCreateChart) {
+      toast.error(`Você atingiu o limite de 2 mapas. Adquira um novo pacote para criar mais.`);
+    }
+  };
 
   if (authLoading || isLoading) {
     return (
@@ -185,6 +232,18 @@ const FullBirthChart = () => {
 
       <main className="flex-1 py-8 px-4">
         <div className="max-w-6xl mx-auto space-y-8">
+          {/* Back button if viewing saved chart */}
+          {viewingSavedChart && (
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/conta")}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Voltar para Mapas Salvos
+            </Button>
+          )}
+
           {/* Header */}
           <div className="text-center space-y-2">
             <div className="inline-flex items-center gap-2 mb-2">
@@ -200,6 +259,32 @@ const FullBirthChart = () => {
               {chartData.birthData.date.toLocaleDateString('pt-BR')} às {chartData.birthData.time}
             </p>
             <p className="text-sm text-muted-foreground">{birthInfo?.birthPlace}</p>
+
+            {/* Save button */}
+            {!viewingSavedChart && !isChartSaved && (
+              <div className="pt-4">
+                {canCreateChart ? (
+                  <Button
+                    onClick={handleSaveChart}
+                    disabled={isSaving}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {isSaving ? 'Salvando...' : 'Salvar Mapa na Minha Conta'}
+                  </Button>
+                ) : (
+                  <p className="text-amber-400 text-sm">
+                    Limite de 2 mapas atingido. Adquira novo pacote para salvar mais.
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  {remainingCharts} mapa{remainingCharts !== 1 ? 's' : ''} restante{remainingCharts !== 1 ? 's' : ''}
+                </p>
+              </div>
+            )}
+            {!viewingSavedChart && isChartSaved && (
+              <p className="text-green-400 text-sm pt-4">✓ Mapa já salvo na sua conta</p>
+            )}
           </div>
 
           {/* Big Three Summary */}
@@ -274,22 +359,9 @@ const FullBirthChart = () => {
             </div>
           </div>
 
-          {/* Aspects */}
+          {/* Planetary Aspects Interpretation - Premium Feature */}
           {chartData.aspects && chartData.aspects.length > 0 && (
-            <div className="bg-card/50 rounded-lg p-6 border border-primary/20">
-              <h2 className="text-xl font-display text-foreground mb-4">
-                Aspectos Planetários
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {chartData.aspects.slice(0, 15).map((aspect, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <span className="text-sm">{aspect.planet1}</span>
-                    <span className="text-xs text-primary font-medium">{aspect.type}</span>
-                    <span className="text-sm">{aspect.planet2}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <PlanetaryAspects aspects={chartData.aspects} />
           )}
 
           {/* Full Interpretation */}
