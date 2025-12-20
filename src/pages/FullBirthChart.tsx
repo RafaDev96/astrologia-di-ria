@@ -308,25 +308,28 @@ const FullBirthChart = () => {
               <p className="text-green-400 text-sm pt-4">✓ Mapa já salvo na sua conta</p>
             )}
 
-            {/* Download PDF Buttons */}
-            <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
-              <Button
-                onClick={() => handleDownloadPDF(true)}
-                disabled={isGeneratingPDF}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {isGeneratingPDF ? 'Gerando...' : 'PDF Completo (Premium)'}
-              </Button>
-              <Button
-                onClick={() => handleDownloadPDF(false)}
-                disabled={isGeneratingPDF}
-                variant="outline"
-                className="border-primary/50 hover:bg-primary/10"
-              >
-                <Download className="w-4 h-4 mr-2" />
-                {isGeneratingPDF ? 'Gerando...' : 'PDF Resumido (Grátis)'}
-              </Button>
+            {/* Download PDF Button */}
+            <div className="pt-4">
+              {isPremium ? (
+                <Button
+                  onClick={() => handleDownloadPDF(true)}
+                  disabled={isGeneratingPDF}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {isGeneratingPDF ? 'Gerando...' : 'Baixar PDF Completo'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => handleDownloadPDF(false)}
+                  disabled={isGeneratingPDF}
+                  variant="outline"
+                  className="border-primary/50 hover:bg-primary/10"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  {isGeneratingPDF ? 'Gerando...' : 'Baixar PDF Resumido'}
+                </Button>
+              )}
             </div>
           </div>
 
