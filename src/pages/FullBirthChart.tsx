@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, Lock, Star, Save, ChevronLeft } from "lucide-react";
+import { Loader2, Lock, Star, Save, ChevronLeft, BookOpen, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ZodiacWheel from "@/components/ZodiacWheel";
@@ -13,6 +14,7 @@ import { calculateBirthChart, ChartData, BirthData } from "@/utils/astroCalculat
 import { useAuth } from "@/hooks/useAuth";
 import { useSavedCharts, SavedChart } from "@/hooks/useSavedCharts";
 import { toast } from "sonner";
+
 const FullBirthChart = () => {
   const navigate = useNavigate();
   const { user, profile, isPremium, loading: authLoading, refreshProfile } = useAuth();
@@ -359,13 +361,33 @@ const FullBirthChart = () => {
             </div>
           </div>
 
-          {/* Planetary Aspects Interpretation - Premium Feature */}
-          {chartData.aspects && chartData.aspects.length > 0 && (
-            <PlanetaryAspects aspects={chartData.aspects} />
-          )}
-
-          {/* Full Interpretation */}
-          <ChartInterpretation chartData={chartData} userName={birthInfo?.name} />
+          {/* Tabs for Interpretation and Planetary Aspects */}
+          <Tabs defaultValue="interpretation" className="w-full">
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="interpretation" className="gap-2">
+                <BookOpen className="w-4 h-4" />
+                Interpretação
+              </TabsTrigger>
+              <TabsTrigger value="aspects" className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Aspectos Planetários
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="interpretation">
+              <ChartInterpretation chartData={chartData} userName={birthInfo?.name} />
+            </TabsContent>
+            
+            <TabsContent value="aspects">
+              {chartData.aspects && chartData.aspects.length > 0 ? (
+                <PlanetaryAspects aspects={chartData.aspects} />
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>Nenhum aspecto encontrado no seu mapa.</p>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
         </div>
       </main>
 
