@@ -258,7 +258,7 @@ const FullBirthChart = () => {
             </h1>
             <p className="text-xl text-primary">{birthInfo?.name}</p>
             <p className="text-muted-foreground">
-              {chartData.birthData.date.toLocaleDateString('pt-BR')} às {chartData.birthData.time}
+              {new Date(chartData.birthData.date).toLocaleDateString('pt-BR')} às {chartData.birthData.time}
             </p>
             <p className="text-sm text-muted-foreground">{birthInfo?.birthPlace}</p>
 
