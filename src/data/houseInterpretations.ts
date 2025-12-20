@@ -4,6 +4,13 @@ export interface HouseInterpretation {
   number: number;
   name: string;
   title: string;
+  archetype: string;
+  symbol: string;
+  element: string;
+  modality: string;
+  naturalRuler: string;
+  axis: string;
+  axisDescription: string;
   keywords: string[];
   deepMeaning: string;
   lifeAreas: string[];
@@ -13,11 +20,80 @@ export interface HouseInterpretation {
   signInfluences: Record<string, string>;
 }
 
+// Descrições dos eixos das casas (casas opostas trabalham juntas)
+export const houseAxes = {
+  "1-7": {
+    name: "Eixo da Identidade e Relacionamentos",
+    description: "O eixo Eu-Outro. A Casa 1 representa quem você é, enquanto a Casa 7 representa quem você atrai e busca. Juntas, elas ensinam sobre equilíbrio entre individualidade e parceria.",
+    lesson: "Ser completo em si mesmo para criar parcerias saudáveis"
+  },
+  "2-8": {
+    name: "Eixo dos Recursos",
+    description: "O eixo Meu-Nosso. A Casa 2 governa seus recursos pessoais, enquanto a Casa 8 governa recursos compartilhados. Juntas, exploram a relação com valor e poder.",
+    lesson: "Equilibrar posse pessoal com interdependência"
+  },
+  "3-9": {
+    name: "Eixo do Conhecimento",
+    description: "O eixo Informação-Sabedoria. A Casa 3 é o aprendizado cotidiano, enquanto a Casa 9 é a sabedoria superior. Juntas, mostram a jornada do dado ao significado.",
+    lesson: "Integrar conhecimento prático com visão filosófica"
+  },
+  "4-10": {
+    name: "Eixo Vida Privada-Pública",
+    description: "O eixo Raízes-Vocação. A Casa 4 é seu fundamento interno e lar, enquanto a Casa 10 é sua posição no mundo. Juntas, equilibram vida pessoal e profissional.",
+    lesson: "Construir carreira sobre fundações emocionais sólidas"
+  },
+  "5-11": {
+    name: "Eixo da Criação e Coletivo",
+    description: "O eixo Expressão Pessoal-Contribuição Social. A Casa 5 é sua criatividade individual, enquanto a Casa 11 é sua contribuição para o grupo. Juntas, conectam alegria pessoal com ideais coletivos.",
+    lesson: "Usar talentos individuais para benefício do coletivo"
+  },
+  "6-12": {
+    name: "Eixo Serviço e Transcendência",
+    description: "O eixo Trabalho-Espírito. A Casa 6 é serviço prático e saúde, enquanto a Casa 12 é dissolução e espiritualidade. Juntas, ensinam sobre servir sem se perder.",
+    lesson: "Encontrar o sagrado no cotidiano e estrutura no espiritual"
+  }
+};
+
+// Quadrantes das casas
+export const houseQuadrants = {
+  personal: {
+    houses: [1, 2, 3],
+    name: "Quadrante Pessoal",
+    focus: "Desenvolvimento do Eu",
+    description: "As casas 1-3 focam em seu desenvolvimento pessoal: identidade, recursos e mente."
+  },
+  family: {
+    houses: [4, 5, 6],
+    name: "Quadrante Familiar",
+    focus: "Fundações e Expressão",
+    description: "As casas 4-6 focam em suas raízes, criatividade e trabalho diário."
+  },
+  social: {
+    houses: [7, 8, 9],
+    name: "Quadrante Social",
+    focus: "Relacionamentos e Expansão",
+    description: "As casas 7-9 focam em parcerias, transformação e busca de significado."
+  },
+  universal: {
+    houses: [10, 11, 12],
+    name: "Quadrante Universal",
+    focus: "Contribuição ao Mundo",
+    description: "As casas 10-12 focam em carreira, comunidade e transcendência."
+  }
+};
+
 export const houseInterpretations: HouseInterpretation[] = [
   {
     number: 1,
     name: "Casa 1",
     title: "A Casa do Eu - O Ascendente",
+    archetype: "O Guerreiro / O Herói",
+    symbol: "🎭",
+    element: "Fogo",
+    modality: "Angular",
+    naturalRuler: "Áries / Marte",
+    axis: "1-7",
+    axisDescription: "Oposta à Casa 7 (Parcerias) — equilíbrio entre EU e O OUTRO",
     keywords: ["Identidade", "Aparência", "Primeira Impressão", "Começos", "Vitalidade"],
     deepMeaning: `A Casa 1 é a mais pessoal de todas as casas astrológicas. Ela representa a máscara que você usa para o mundo, sua aparência física, e como você instintivamente se apresenta aos outros. O signo no Ascendente (cúspide da Casa 1) é tão importante quanto o signo solar, pois define como você inicia ações e enfrenta novos começos.
 
@@ -55,6 +131,13 @@ Esta casa governa seu corpo físico, sua energia vital, e a primeira impressão 
     number: 2,
     name: "Casa 2",
     title: "A Casa dos Valores e Recursos",
+    archetype: "O Construtor / O Banqueiro",
+    symbol: "💰",
+    element: "Terra",
+    modality: "Sucedente",
+    naturalRuler: "Touro / Vênus",
+    axis: "2-8",
+    axisDescription: "Oposta à Casa 8 (Recursos Compartilhados) — equilíbrio entre MEU e NOSSO",
     keywords: ["Dinheiro", "Valores", "Autoestima", "Talentos", "Posses"],
     deepMeaning: `A Casa 2 vai muito além de finanças - ela representa aquilo que você valoriza profundamente e como você manifesta segurança material e emocional. Esta casa revela sua relação com dinheiro, posses, mas também com seus talentos naturais e senso de autoestima.
 
@@ -92,6 +175,13 @@ Aqui vemos como você ganha dinheiro, o que considera valioso, e como você cons
     number: 3,
     name: "Casa 3",
     title: "A Casa da Mente e Comunicação",
+    archetype: "O Mensageiro / O Estudante",
+    symbol: "💬",
+    element: "Ar",
+    modality: "Cadente",
+    naturalRuler: "Gêmeos / Mercúrio",
+    axis: "3-9",
+    axisDescription: "Oposta à Casa 9 (Filosofia) — equilíbrio entre INFORMAÇÃO e SABEDORIA",
     keywords: ["Comunicação", "Pensamento", "Irmãos", "Vizinhança", "Aprendizado"],
     deepMeaning: `A Casa 3 governa como sua mente funciona no dia a dia - seus padrões de pensamento, estilo de comunicação, e curiosidade natural. Esta é a casa do aprendizado inicial, das trocas de ideias, e de como você processa e compartilha informações.
 
@@ -129,6 +219,13 @@ Também governa seus relacionamentos com irmãos, vizinhos, e seu ambiente local
     number: 4,
     name: "Casa 4",
     title: "A Casa do Lar e Raízes - O Fundo do Céu",
+    archetype: "A Mãe / O Ancestral",
+    symbol: "🏠",
+    element: "Água",
+    modality: "Angular",
+    naturalRuler: "Câncer / Lua",
+    axis: "4-10",
+    axisDescription: "Oposta à Casa 10 (Carreira) — equilíbrio entre VIDA PRIVADA e PÚBLICA",
     keywords: ["Lar", "Família", "Raízes", "Ancestralidade", "Fundações"],
     deepMeaning: `A Casa 4, também conhecida como Fundo do Céu (IC), representa suas raízes mais profundas - sua família de origem, sua ancestralidade, e as fundações emocionais sobre as quais você constrói sua vida. É o ponto mais privado do mapa, onde você encontra refúgio.
 
@@ -166,6 +263,13 @@ Esta casa governa sua relação com um dos pais (tradicionalmente o pai ou a fig
     number: 5,
     name: "Casa 5",
     title: "A Casa da Criatividade e Alegria",
+    archetype: "A Criança / O Artista",
+    symbol: "🎨",
+    element: "Fogo",
+    modality: "Sucedente",
+    naturalRuler: "Leão / Sol",
+    axis: "5-11",
+    axisDescription: "Oposta à Casa 11 (Grupos) — equilíbrio entre EXPRESSÃO PESSOAL e COLETIVA",
     keywords: ["Criatividade", "Romance", "Filhos", "Diversão", "Autoexpressão"],
     deepMeaning: `A Casa 5 é onde seu espírito brinca! Esta é a casa da pura autoexpressão criativa, da alegria, do romance, dos filhos, e de tudo que você faz pelo simples prazer de fazer. É onde seu coração se expande em direção à vida.
 
@@ -203,6 +307,13 @@ Governa romances (diferente de parcerias sérias da Casa 7), jogos, hobbies, esp
     number: 6,
     name: "Casa 6",
     title: "A Casa da Saúde e Serviço",
+    archetype: "O Servo / O Curador",
+    symbol: "⚕️",
+    element: "Terra",
+    modality: "Cadente",
+    naturalRuler: "Virgem / Mercúrio",
+    axis: "6-12",
+    axisDescription: "Oposta à Casa 12 (Transcendência) — equilíbrio entre TRABALHO e ESPÍRITO",
     keywords: ["Saúde", "Trabalho", "Rotina", "Serviço", "Aperfeiçoamento"],
     deepMeaning: `A Casa 6 governa os aspectos práticos do dia a dia - sua saúde física, rotinas diárias, ambiente de trabalho, e seu desejo de ser útil. É aqui que você aperfeiçoa suas habilidades e coloca seu conhecimento em prática.
 
@@ -240,6 +351,13 @@ Esta casa não é sobre carreira (Casa 10), mas sobre o trabalho diário, a rela
     number: 7,
     name: "Casa 7",
     title: "A Casa das Parcerias - O Descendente",
+    archetype: "O Parceiro / O Espelho",
+    symbol: "💑",
+    element: "Ar",
+    modality: "Angular",
+    naturalRuler: "Libra / Vênus",
+    axis: "1-7",
+    axisDescription: "Oposta à Casa 1 (Eu) — equilíbrio entre EU e O OUTRO",
     keywords: ["Casamento", "Parcerias", "Relacionamentos", "Contratos", "O Outro"],
     deepMeaning: `A Casa 7, oposta à Casa 1, representa o "outro" em sua vida - parceiros românticos, de negócios, e até inimigos declarados. O Descendente (cúspide da Casa 7) revela o que você busca e atrai em relacionamentos íntimos, muitas vezes qualidades que você não reconhece em si mesmo.
 
@@ -277,6 +395,13 @@ Esta casa governa casamento, parcerias de negócios, contratos legais, e qualque
     number: 8,
     name: "Casa 8",
     title: "A Casa da Transformação e Mistérios",
+    archetype: "O Fênix / O Xamã",
+    symbol: "🦅",
+    element: "Água",
+    modality: "Sucedente",
+    naturalRuler: "Escorpião / Plutão",
+    axis: "2-8",
+    axisDescription: "Oposta à Casa 2 (Recursos Próprios) — equilíbrio entre MEU e NOSSO",
     keywords: ["Transformação", "Morte/Renascimento", "Sexualidade", "Recursos Compartilhados", "Ocultismo"],
     deepMeaning: `A Casa 8 é uma das mais profundas e misteriosas do zodíaco. Governa os processos de morte e renascimento - não necessariamente físicos, mas transformações psicológicas profundas. É aqui que você encontra poder através de crises e renovação.
 
@@ -314,6 +439,13 @@ Esta casa também governa sexualidade como união íntima, heranças, impostos, 
     number: 9,
     name: "Casa 9",
     title: "A Casa da Expansão e Sabedoria",
+    archetype: "O Sábio / O Explorador",
+    symbol: "🌍",
+    element: "Fogo",
+    modality: "Cadente",
+    naturalRuler: "Sagitário / Júpiter",
+    axis: "3-9",
+    axisDescription: "Oposta à Casa 3 (Mente) — equilíbrio entre INFORMAÇÃO e SABEDORIA",
     keywords: ["Filosofia", "Viagens", "Educação Superior", "Espiritualidade", "Publicação"],
     deepMeaning: `A Casa 9 expande seus horizontes além do familiar. Governa viagens longas (físicas e mentais), educação superior, filosofia, religião, e sua busca por significado. É onde você encontra sabedoria e desenvolve sua visão de mundo.
 
@@ -351,6 +483,13 @@ Esta casa também governa publicações, assuntos legais superiores, e culturas 
     number: 10,
     name: "Casa 10",
     title: "A Casa da Carreira e Vocação - O Meio do Céu",
+    archetype: "O Rei / A Rainha / O Executivo",
+    symbol: "👑",
+    element: "Terra",
+    modality: "Angular",
+    naturalRuler: "Capricórnio / Saturno",
+    axis: "4-10",
+    axisDescription: "Oposta à Casa 4 (Lar) — equilíbrio entre VIDA PRIVADA e PÚBLICA",
     keywords: ["Carreira", "Reputação", "Status", "Vocação", "Legado"],
     deepMeaning: `A Casa 10, cujo ponto inicial é o Meio do Céu (MC), é o ponto mais público do seu mapa. Representa sua carreira, reputação, status social, e como você é visto pelo mundo. É seu papel na sociedade e o legado que você deixa.
 
@@ -388,6 +527,13 @@ Também governa um dos pais (tradicionalmente a mãe ou a figura de autoridade),
     number: 11,
     name: "Casa 11",
     title: "A Casa das Amizades e Ideais",
+    archetype: "O Visionário / O Revolucionário",
+    symbol: "🌟",
+    element: "Ar",
+    modality: "Sucedente",
+    naturalRuler: "Aquário / Urano",
+    axis: "5-11",
+    axisDescription: "Oposta à Casa 5 (Criatividade) — equilíbrio entre EXPRESSÃO PESSOAL e COLETIVA",
     keywords: ["Amizades", "Grupos", "Esperanças", "Causas Sociais", "Futuro"],
     deepMeaning: `A Casa 11 governa suas conexões com a humanidade como um todo - amizades, grupos, organizações, e sua visão para o futuro. É onde seus sonhos e esperanças encontram apoio comunitário e onde você contribui para causas maiores que você.
 
@@ -425,6 +571,13 @@ Esta casa também representa tecnologia, inovação, e movimentos sociais. Mostr
     number: 12,
     name: "Casa 12",
     title: "A Casa do Inconsciente e Transcendência",
+    archetype: "O Místico / O Ermitão",
+    symbol: "🔮",
+    element: "Água",
+    modality: "Cadente",
+    naturalRuler: "Peixes / Netuno",
+    axis: "6-12",
+    axisDescription: "Oposta à Casa 6 (Trabalho) — equilíbrio entre TRABALHO e ESPÍRITO",
     keywords: ["Inconsciente", "Espiritualidade", "Isolamento", "Karma", "Mistério"],
     deepMeaning: `A Casa 12 é a mais misteriosa e difícil de acessar conscientemente. Representa seu inconsciente, padrões kármicos, e tudo que está oculto - incluindo partes de você mesmo que você não reconhece. É simultaneamente uma casa de confinamento e de libertação espiritual.
 
