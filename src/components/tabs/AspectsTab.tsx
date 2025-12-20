@@ -1,7 +1,9 @@
 import { ChartData } from '@/utils/astroCalculations';
 import { aspects as aspectData } from '@/data/astrologyData';
+import { aspectDeepInterpretations, getAspectDeepInterpretation } from '@/data/aspectDeepInterpretations';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import PlanetaryAspects from '@/components/PlanetaryAspects';
 
 interface AspectsTabProps {
@@ -36,11 +38,68 @@ export default function AspectsTab({ chartData }: AspectsTabProps) {
           <CardTitle className="font-display text-2xl text-gradient-gold">
             Aspectos Planetários ✨
           </CardTitle>
-          <CardDescription className="text-base text-foreground/80 mt-2">
-            Os aspectos são as conversas entre os planetas do seu mapa. Eles revelam talentos naturais 
-            e áreas que pedem mais atenção e crescimento.
+          <CardDescription className="text-base text-foreground/80 mt-2 max-w-2xl mx-auto">
+            Os aspectos são as "conversas" entre os planetas do seu mapa — ângulos específicos que revelam 
+            como diferentes partes de você interagem, criando talentos únicos, tensões criativas e padrões de vida.
           </CardDescription>
         </CardHeader>
+      </Card>
+
+      {/* Educational Section about Aspects */}
+      <Card className="bg-card/50 border-primary/20">
+        <CardHeader>
+          <CardTitle className="font-display text-lg text-foreground">📚 Entendendo os Aspectos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Accordion type="single" collapsible className="w-full">
+            {aspectDeepInterpretations.map((aspect, index) => (
+              <AccordionItem key={index} value={`aspect-${index}`} className="border-primary/10">
+                <AccordionTrigger className="hover:no-underline hover:bg-primary/5 px-4 rounded-lg">
+                  <div className="flex items-center gap-3 text-left">
+                    <span className="text-2xl">{aspect.symbol}</span>
+                    <div>
+                      <p className="font-display text-foreground">{aspect.name}</p>
+                      <p className="text-xs text-muted-foreground">{aspect.angle}° • {aspect.archetype}</p>
+                    </div>
+                    <Badge 
+                      variant="outline" 
+                      className={`ml-auto ${
+                        aspect.nature === 'harmonious' ? 'border-green-500 text-green-400' :
+                        aspect.nature === 'challenging' ? 'border-orange-500 text-orange-400' :
+                        'border-blue-500 text-blue-400'
+                      }`}
+                    >
+                      {aspect.nature === 'harmonious' ? 'Harmônico' : 
+                       aspect.nature === 'challenging' ? 'Desafiador' : 'Intensificador'}
+                    </Badge>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="bg-background/30 rounded-lg mx-2 mb-2 p-4">
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {aspect.keywords.map((kw, i) => (
+                        <Badge key={i} variant="secondary" className="bg-primary/10 text-primary text-xs">
+                          {kw}
+                        </Badge>
+                      ))}
+                    </div>
+                    <p className="text-foreground text-sm leading-relaxed whitespace-pre-line">
+                      {aspect.deepMeaning}
+                    </p>
+                    <div className="bg-cosmic-gold/10 p-3 rounded-lg border border-cosmic-gold/20">
+                      <p className="text-xs font-medium text-cosmic-gold mb-1">💡 Como Trabalhar Este Aspecto</p>
+                      <p className="text-sm text-foreground">{aspect.howToWork}</p>
+                    </div>
+                    <div className="bg-green-500/10 p-3 rounded-lg border border-green-500/20">
+                      <p className="text-xs font-medium text-green-400 mb-1">🌱 Oportunidade de Crescimento</p>
+                      <p className="text-sm text-foreground">{aspect.growthOpportunity}</p>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </CardContent>
       </Card>
 
       {/* Summary Cards */}
