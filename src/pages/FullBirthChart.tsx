@@ -78,9 +78,12 @@ const FullBirthChart = () => {
         });
         setBirthData(data);
 
-        // Build BirthData object
+        // Build BirthData object (avoid timezone shift from YYYY-MM-DD parsing)
+        const [year, month, day] = String(data.birthDate).split('-').map(Number);
+        const birthDate = new Date(year, (month || 1) - 1, day || 1);
+
         const birthDataObj: BirthData = {
-          date: new Date(data.birthDate),
+          date: birthDate,
           time: data.birthTime,
           latitude: data.latitude,
           longitude: data.longitude,
@@ -132,7 +135,8 @@ const FullBirthChart = () => {
         chartData,
         userName: birthInfo.name,
         birthPlace: birthInfo.birthPlace,
-        isPremium: premium
+        isPremium: premium,
+        birthDateISO: birthData?.birthDate
       });
       toast.success(premium ? 'PDF completo gerado!' : 'PDF resumido gerado!');
     } catch (error) {
@@ -278,7 +282,12 @@ const FullBirthChart = () => {
             </h1>
             <p className="text-xl text-primary">{birthInfo?.name}</p>
             <p className="text-muted-foreground">
-              {new Date(chartData.birthData.date).toLocaleDateString('pt-BR')} às {chartData.birthData.time}
+              {(birthData?.birthDate
+                ? (() => {
+                    const [y, m, d] = String(birthData.birthDate).split('-').map(Number);
+                    return new Date(y, (m || 1) - 1, d || 1).toLocaleDateString('pt-BR');
+                  })()
+                : new Date(chartData.birthData.date).toLocaleDateString('pt-BR'))} às {chartData.birthData.time}
             </p>
             <p className="text-sm text-muted-foreground">{birthInfo?.birthPlace}</p>
 
