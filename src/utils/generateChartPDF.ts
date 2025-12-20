@@ -8,13 +8,19 @@ interface PDFOptions {
   chartData: ChartData;
   userName: string;
   birthPlace: string;
+  isPremium?: boolean;
 }
 
-export async function generateChartPDF({ chartData, userName, birthPlace }: PDFOptions): Promise<void> {
+export async function generateChartPDF({ chartData, userName, birthPlace, isPremium = false }: PDFOptions): Promise<void> {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const margin = 20;
   let yPos = 20;
+
+  // If not premium, generate simplified PDF
+  if (!isPremium) {
+    return generateSimplifiedPDF(doc, chartData, userName, birthPlace);
+  }
 
   // Helper functions
   const centerText = (text: string, y: number, size: number = 12) => {
@@ -342,6 +348,156 @@ export async function generateChartPDF({ chartData, userName, birthPlace }: PDFO
   centerText(`Criado em ${new Date().toLocaleDateString('pt-BR')}`, yPos, 10);
 
   // Save the PDF
-  const fileName = `mapa-astral-${userName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+  const fileName = `mapa-astral-completo-${userName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+  doc.save(fileName);
+}
+
+// Simplified PDF for free users
+function generateSimplifiedPDF(doc: jsPDF, chartData: ChartData, userName: string, birthPlace: string): void {
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 20;
+  let yPos = 20;
+
+  const centerText = (text: string, y: number, size: number = 12) => {
+    doc.setFontSize(size);
+    doc.text(text, pageWidth / 2, y, { align: 'center' });
+  };
+
+  const addLine = (text: string, indent: number = 0, fontSize: number = 10) => {
+    doc.setFontSize(fontSize);
+    const lines = doc.splitTextToSize(text, pageWidth - margin * 2 - indent);
+    lines.forEach((line: string) => {
+      if (yPos > 275) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.text(line, margin + indent, yPos);
+      yPos += fontSize * 0.45;
+    });
+  };
+
+  // Header
+  doc.setFillColor(30, 27, 75);
+  doc.rect(0, 0, pageWidth, 55, 'F');
+  
+  doc.setTextColor(255, 215, 0);
+  centerText('MAPA ASTRAL - RESUMO', 18, 22);
+  doc.setTextColor(255, 255, 255);
+  centerText(userName, 32, 18);
+  
+  const birthDate = new Date(chartData.birthData.date).toLocaleDateString('pt-BR');
+  centerText(`${birthDate} às ${chartData.birthData.time}`, 44, 11);
+  centerText(birthPlace, 52, 10);
+  
+  doc.setTextColor(0, 0, 0);
+  yPos = 70;
+
+  // Basic Big Three
+  doc.setFontSize(14);
+  doc.setTextColor(139, 92, 246);
+  doc.text('☀️ O BÁSICO DO SEU MAPA', margin, yPos);
+  doc.setTextColor(0, 0, 0);
+  yPos += 12;
+
+  const sunSign = chartData.planets.find(p => p.planet === 'Sol')?.sign || '';
+  const moonSign = chartData.planets.find(p => p.planet === 'Lua')?.sign || '';
+  const ascSign = chartData.ascendant.sign;
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Sol em ${sunSign}`, margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  yPos += 6;
+  addLine('Representa sua essência, ego e propósito de vida.', 5, 9);
+  yPos += 8;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Lua em ${moonSign}`, margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  yPos += 6;
+  addLine('Representa suas emoções, instintos e necessidades internas.', 5, 9);
+  yPos += 8;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Ascendente em ${ascSign}`, margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  yPos += 6;
+  addLine('Representa como você se apresenta ao mundo e primeiras impressões.', 5, 9);
+  yPos += 12;
+
+  // Planets list
+  doc.setFontSize(14);
+  doc.setTextColor(139, 92, 246);
+  doc.text('🪐 POSIÇÃO DOS PLANETAS', margin, yPos);
+  doc.setTextColor(0, 0, 0);
+  yPos += 10;
+
+  chartData.planets.forEach(planet => {
+    const degree = Math.floor(planet.degree % 30);
+    const houseInfo = planet.house ? ` (Casa ${planet.house})` : '';
+    addLine(`${planet.planet}: ${planet.sign} ${degree}°${houseInfo}`, 5, 10);
+  });
+
+  // Houses summary
+  yPos += 10;
+  doc.setFontSize(14);
+  doc.setTextColor(139, 92, 246);
+  doc.text('🏠 CÚSPIDES DAS CASAS', margin, yPos);
+  doc.setTextColor(0, 0, 0);
+  yPos += 10;
+
+  const signs = ['Áries', 'Touro', 'Gêmeos', 'Câncer', 'Leão', 'Virgem', 
+                 'Libra', 'Escorpião', 'Sagitário', 'Capricórnio', 'Aquário', 'Peixes'];
+
+  chartData.houses.forEach((houseDegree, index) => {
+    const normalized = ((houseDegree % 360) + 360) % 360;
+    const signIndex = Math.floor(normalized / 30);
+    const cuspSign = signs[signIndex];
+    addLine(`Casa ${index + 1}: ${cuspSign}`, 5, 10);
+  });
+
+  // Aspects count
+  if (chartData.aspects && chartData.aspects.length > 0) {
+    yPos += 10;
+    doc.setFontSize(14);
+    doc.setTextColor(139, 92, 246);
+    doc.text('✨ ASPECTOS', margin, yPos);
+    doc.setTextColor(0, 0, 0);
+    yPos += 10;
+
+    addLine(`Seu mapa possui ${chartData.aspects.length} aspectos planetários.`, 5, 10);
+    
+    const aspectCounts: Record<string, number> = {};
+    chartData.aspects.forEach(a => {
+      aspectCounts[a.type] = (aspectCounts[a.type] || 0) + 1;
+    });
+    
+    Object.entries(aspectCounts).forEach(([type, count]) => {
+      addLine(`• ${count}x ${type}`, 10, 9);
+    });
+  }
+
+  // CTA for premium
+  yPos += 20;
+  doc.setFillColor(139, 92, 246);
+  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 40, 5, 5, 'F');
+  
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  centerText('Quer interpretações profundas?', yPos + 15, 12);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  centerText('Adquira o Mapa Astral Completo Premium e receba', yPos + 25, 10);
+  centerText('análises detalhadas de todas as posições do seu mapa!', yPos + 32, 10);
+
+  yPos += 55;
+  doc.setTextColor(128, 128, 128);
+  centerText('✨ Gerado por Horóscopo da Gabi ✨', yPos, 11);
+  yPos += 6;
+  centerText(`Criado em ${new Date().toLocaleDateString('pt-BR')}`, yPos, 9);
+
+  // Save
+  const fileName = `mapa-astral-resumo-${userName.toLowerCase().replace(/\s+/g, '-')}.pdf`;
   doc.save(fileName);
 }

@@ -123,7 +123,7 @@ const FullBirthChart = () => {
     }
   };
 
-  const handleDownloadPDF = async () => {
+  const handleDownloadPDF = async (premium: boolean = true) => {
     if (!chartData || !birthInfo) return;
     
     setIsGeneratingPDF(true);
@@ -131,9 +131,10 @@ const FullBirthChart = () => {
       await generateChartPDF({
         chartData,
         userName: birthInfo.name,
-        birthPlace: birthInfo.birthPlace
+        birthPlace: birthInfo.birthPlace,
+        isPremium: premium
       });
-      toast.success('PDF gerado com sucesso!');
+      toast.success(premium ? 'PDF completo gerado!' : 'PDF resumido gerado!');
     } catch (error) {
       console.error('Erro ao gerar PDF:', error);
       toast.error('Erro ao gerar PDF. Tente novamente.');
@@ -307,16 +308,24 @@ const FullBirthChart = () => {
               <p className="text-green-400 text-sm pt-4">✓ Mapa já salvo na sua conta</p>
             )}
 
-            {/* Download PDF Button */}
-            <div className="pt-4">
+            {/* Download PDF Buttons */}
+            <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
               <Button
-                onClick={handleDownloadPDF}
+                onClick={() => handleDownloadPDF(true)}
+                disabled={isGeneratingPDF}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                {isGeneratingPDF ? 'Gerando...' : 'PDF Completo (Premium)'}
+              </Button>
+              <Button
+                onClick={() => handleDownloadPDF(false)}
                 disabled={isGeneratingPDF}
                 variant="outline"
                 className="border-primary/50 hover:bg-primary/10"
               >
                 <Download className="w-4 h-4 mr-2" />
-                {isGeneratingPDF ? 'Gerando PDF...' : 'Baixar Resumo em PDF'}
+                {isGeneratingPDF ? 'Gerando...' : 'PDF Resumido (Grátis)'}
               </Button>
             </div>
           </div>
