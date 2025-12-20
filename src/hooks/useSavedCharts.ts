@@ -25,7 +25,8 @@ interface UseSavedChartsReturn {
   refreshCharts: () => Promise<void>;
 }
 
-const MAX_CHARTS_PER_PREMIUM = 2;
+const MAX_CHARTS_FREE = 1;
+const MAX_CHARTS_PREMIUM = 2;
 
 export function useSavedCharts(): UseSavedChartsReturn {
   const { user, profile, isPremium, refreshProfile } = useAuth();
@@ -33,8 +34,9 @@ export function useSavedCharts(): UseSavedChartsReturn {
   const [loading, setLoading] = useState(true);
 
   const chartsCount = profile?.charts_created_count ?? 0;
-  const canCreateChart = isPremium && chartsCount < MAX_CHARTS_PER_PREMIUM;
-  const remainingCharts = Math.max(0, MAX_CHARTS_PER_PREMIUM - chartsCount);
+  const maxCharts = isPremium ? MAX_CHARTS_PREMIUM : MAX_CHARTS_FREE;
+  const canCreateChart = !!user && chartsCount < maxCharts;
+  const remainingCharts = Math.max(0, maxCharts - chartsCount);
 
   const fetchCharts = useCallback(async () => {
     if (!user) {
@@ -76,15 +78,16 @@ export function useSavedCharts(): UseSavedChartsReturn {
     birthData: any,
     chartData: ChartData
   ): Promise<boolean> => {
-    if (!user || !isPremium) {
-      toast.error('Você precisa ter acesso premium para salvar mapas');
+    if (!user) {
+      toast.error('Você precisa estar logado para salvar mapas');
       return false;
     }
 
     if (!canCreateChart) {
-      toast.error(
-        `Você atingiu o limite de ${MAX_CHARTS_PER_PREMIUM} mapas. Adquira um novo pacote premium para criar mais mapas.`
-      );
+      const message = isPremium
+        ? `Você atingiu o limite de ${MAX_CHARTS_PREMIUM} mapas. Adquira um novo pacote premium para criar mais mapas.`
+        : `Usuários gratuitos podem salvar apenas ${MAX_CHARTS_FREE} mapa. Adquira o plano premium para salvar mais!`;
+      toast.error(message);
       return false;
     }
 
