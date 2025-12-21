@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Star, Youtube, User, LogIn } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "./ThemeToggle";
 
 const Header = () => {
   const { user, loading } = useAuth();
@@ -60,9 +61,12 @@ const Header = () => {
               </Link>
             )
           )}
+          
+          <ThemeToggle />
         </nav>
 
         <div className="flex items-center gap-4 md:hidden">
+          <ThemeToggle />
           <a
             href="https://www.youtube.com/@HoroscopodaGabi"
             target="_blank"
