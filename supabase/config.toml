@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.order-status]
 verify_jwt = false
+
+[functions.generate-2026-forecast]
+verify_jwt = false

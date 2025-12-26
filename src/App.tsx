@@ -20,6 +20,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Account from "./pages/Account";
 import Admin from "./pages/Admin";
+import Forecast2026 from "./pages/Forecast2026";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/cadastro" element={<Signup />} />
                 <Route path="/conta" element={<Account />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/previsao-2026" element={<Forecast2026 />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>
