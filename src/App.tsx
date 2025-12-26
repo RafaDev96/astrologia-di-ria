@@ -21,6 +21,7 @@ import Signup from "./pages/Signup";
 import Account from "./pages/Account";
 import Admin from "./pages/Admin";
 import Forecast2026 from "./pages/Forecast2026";
+import CareerReading from "./pages/CareerReading";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +51,7 @@ const App = () => (
                 <Route path="/conta" element={<Account />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/previsao-2026" element={<Forecast2026 />} />
+                <Route path="/leitura-profissional" element={<CareerReading />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>
