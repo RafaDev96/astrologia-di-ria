@@ -10,7 +10,7 @@ import { calculateBirthChart, ChartData, BirthData } from '@/utils/astroCalculat
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Share2, Star, RotateCcw, Lock, Sparkles } from 'lucide-react';
+import { Download, Share2, Star, RotateCcw, Lock, Sparkles, Briefcase } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -305,6 +305,14 @@ export default function BirthChartResult() {
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Previsão 2026
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => navigate('/leitura-profissional')}
+                  className="border-emerald-500/30 hover:bg-emerald-500/10 text-emerald-500 hover:text-emerald-400"
+                >
+                  <Briefcase className="w-4 h-4 mr-2" />
+                  Carreira
                 </Button>
                 {!isPaid && (
                   <Button 
