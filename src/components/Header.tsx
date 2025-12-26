@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Star, Youtube, User, LogIn, Shield } from "lucide-react";
+import { Star, Youtube, User, LogIn, Shield, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminRole } from "@/hooks/useAdminRole";
 import { ThemeToggle } from "./ThemeToggle";
@@ -33,6 +33,13 @@ const Header = () => {
             className="font-body text-lg text-foreground/80 hover:text-primary transition-colors duration-300"
           >
             Mapa Astral
+          </Link>
+          <Link
+            to="/previsao-2026"
+            className="flex items-center gap-2 font-body text-lg text-foreground/80 hover:text-primary transition-colors duration-300"
+          >
+            <Sparkles className="w-4 h-4" />
+            2026
           </Link>
           <a
             href="https://www.youtube.com/@HoroscopodaGabi"
