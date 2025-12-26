@@ -181,7 +181,24 @@ export type Database = {
       }
     }
     Functions: {
+      admin_toggle_premium: {
+        Args: { p_is_premium: boolean; p_user_id: string }
+        Returns: Json
+      }
       get_admin_metrics: { Args: never; Returns: Json }
+      get_admin_payments: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
+      get_admin_users: {
+        Args: {
+          p_filter?: string
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+        }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
