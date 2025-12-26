@@ -161,14 +161,14 @@ export default function CareerReading() {
           <div className="container mx-auto max-w-4xl">
             {/* Header */}
             <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 rounded-full mb-4">
-                <Briefcase className="w-4 h-4 text-emerald-400" />
-                <span className="text-sm font-body text-emerald-400">Leitura Profissional</span>
-              </div>
-              
-              <h1 className="font-display text-3xl md:text-5xl text-gradient-gold mb-4">
-                Emprego, Trabalho e Vocação
-              </h1>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/20 rounded-full mb-4">
+            <Briefcase className="w-4 h-4 text-emerald-400" />
+            <span className="text-sm font-body text-emerald-400">Mapa Vocacional</span>
+          </div>
+          
+          <h1 className="font-display text-3xl md:text-5xl text-gradient-gold mb-4">
+            🔮 Mapa Profissional e Vocacional
+          </h1>
               
               <p className="font-body text-lg text-foreground/70 max-w-2xl mx-auto">
                 Uma análise profunda do seu mapa astral focada em carreira, trabalho diário, 

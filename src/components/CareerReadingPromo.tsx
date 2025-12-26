@@ -41,7 +41,7 @@ const CareerReadingPromo = () => {
           </div>
           
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl text-gradient-gold mb-4">
-            Leitura Profissional
+            🔮 Mapa Profissional e Vocacional
           </h2>
           
           <p className="font-body text-lg text-foreground/70 max-w-2xl mx-auto mb-6">
