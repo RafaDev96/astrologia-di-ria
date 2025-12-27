@@ -136,7 +136,28 @@ export default function BirthChartResult() {
   };
 
   useEffect(() => {
-    const storedData = sessionStorage.getItem('birthChartData');
+    // First check for shared data in URL
+    const dataParam = searchParams.get('data');
+    let storedData = sessionStorage.getItem('birthChartData');
+    
+    if (dataParam && !storedData) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(atob(dataParam)));
+        const parsedData = {
+          name: decoded.n,
+          date: decoded.d,
+          time: decoded.t,
+          city: decoded.c,
+          latitude: decoded.lat,
+          longitude: decoded.lng,
+        };
+        storedData = JSON.stringify(parsedData);
+        sessionStorage.setItem('birthChartData', storedData);
+      } catch (error) {
+        console.error('Error parsing shared data:', error);
+      }
+    }
+    
     if (!storedData) {
       navigate('/mapa-astral');
       return;
@@ -144,7 +165,7 @@ export default function BirthChartResult() {
 
     const calculateChart = async () => {
       try {
-        const parsed = JSON.parse(storedData);
+        const parsed = JSON.parse(storedData!);
         
         const [year, month, day] = parsed.date.split('-').map(Number);
         const birthDate = new Date(year, month - 1, day);
@@ -170,7 +191,7 @@ export default function BirthChartResult() {
     };
     
     calculateChart();
-  }, [navigate, user]);
+  }, [navigate, user, searchParams]);
 
   const handleDownload = async (type: 'wheel' | 'mandala') => {
     if (!isPaid) {
@@ -216,19 +237,40 @@ export default function BirthChartResult() {
   };
 
   const handleShare = async () => {
-    if (navigator.share) {
-      try {
+    // Get birth data from session storage to create shareable link
+    const storedData = sessionStorage.getItem('birthChartData');
+    if (!storedData) {
+      toast.error('Dados do mapa não encontrados');
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(storedData);
+      // Create URL with encoded birth data
+      const shareData = {
+        n: parsed.name,
+        d: parsed.date,
+        t: parsed.time,
+        c: parsed.city,
+        lat: parsed.latitude,
+        lng: parsed.longitude,
+      };
+      const encodedData = btoa(encodeURIComponent(JSON.stringify(shareData)));
+      const shareUrl = `${window.location.origin}/mapa-astral/resultado?data=${encodedData}`;
+
+      if (navigator.share) {
         await navigator.share({
           title: `Mapa Astral de ${birthInfo?.name}`,
           text: `Confira meu mapa astral completo no Horoscopo da Gabi!`,
-          url: window.location.href,
+          url: shareUrl,
         });
-      } catch (error) {
-        // User cancelled or share failed
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copiado!');
       }
-    } else {
-      await navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copiado!');
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast.error('Erro ao compartilhar');
     }
   };
 
