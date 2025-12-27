@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
-import { Loader2, Lock, Star, Save, ChevronLeft, Sparkles, Globe, Home, Users, Eye, Download } from "lucide-react";
+import { Loader2, Lock, Star, Save, ChevronLeft, Sparkles, Globe, Home, Users, Eye, Download, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
@@ -144,6 +144,41 @@ const FullBirthChart = () => {
       toast.error('Erro ao gerar PDF. Tente novamente.');
     } finally {
       setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!birthData || !birthInfo) {
+      toast.error('Dados do mapa não encontrados');
+      return;
+    }
+
+    try {
+      // Create URL with encoded birth data
+      const shareData = {
+        n: birthInfo.name,
+        d: birthData.birthDate,
+        t: birthData.birthTime,
+        c: birthData.birthPlace || birthData.city,
+        lat: birthData.latitude,
+        lng: birthData.longitude,
+      };
+      const encodedData = btoa(encodeURIComponent(JSON.stringify(shareData)));
+      const shareUrl = `${window.location.origin}/mapa-astral/resultado?data=${encodedData}`;
+
+      if (navigator.share) {
+        await navigator.share({
+          title: `Mapa Astral de ${birthInfo.name}`,
+          text: `Confira meu mapa astral completo no Horoscopo da Gabi!`,
+          url: shareUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success('Link copiado!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+      toast.error('Erro ao compartilhar');
     }
   };
 
@@ -317,8 +352,8 @@ const FullBirthChart = () => {
               <p className="text-green-400 text-sm pt-4">✓ Mapa já salvo na sua conta</p>
             )}
 
-            {/* Download PDF Button */}
-            <div className="pt-4">
+            {/* Download PDF and Share Buttons */}
+            <div className="pt-4 flex flex-wrap justify-center gap-3">
               {isPremium ? (
                 <Button
                   onClick={() => handleDownloadPDF(true)}
@@ -339,6 +374,14 @@ const FullBirthChart = () => {
                   {isGeneratingPDF ? 'Gerando...' : 'Baixar PDF Resumido'}
                 </Button>
               )}
+              <Button
+                onClick={handleShare}
+                variant="outline"
+                className="border-primary/30 hover:bg-primary/10"
+              >
+                <Share2 className="w-4 h-4 mr-2" />
+                Compartilhar
+              </Button>
             </div>
           </div>
 
