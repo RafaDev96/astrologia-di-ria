@@ -572,21 +572,103 @@ function generateSimplifiedPDF(
     });
   }
 
-  // CTA for premium
-  yPos += 20;
+  // ========== ANNUAL FORECAST 2026 SUMMARY ==========
+  doc.addPage();
+  yPos = 20;
+  
+  doc.setFillColor(30, 27, 75);
+  doc.rect(0, 0, pageWidth, 40, 'F');
+  doc.setTextColor(255, 215, 0);
+  centerText('🔮 PREVISÃO 2026 - RESUMO', 15, 16);
+  doc.setTextColor(255, 255, 255);
+  centerText('Uma prévia das tendências do seu ano', 30, 10);
+  doc.setTextColor(0, 0, 0);
+  yPos = 50;
+
+  doc.setFontSize(12);
+  doc.setTextColor(139, 92, 246);
+  doc.text('📅 Visão Geral para 2026', margin, yPos);
+  doc.setTextColor(0, 0, 0);
+  yPos += 10;
+
+  addLine(`Com Sol em ${sunSign} e Lua em ${moonSign}, 2026 traz oportunidades de crescimento pessoal alinhadas com sua essência e necessidades emocionais.`, 5, 9);
+  yPos += 5;
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('💫 Principais Tendências:', margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  yPos += 8;
+  
+  addLine(`• Autoexpressão: Ano para desenvolver as qualidades do seu Sol em ${sunSign}.`, 5, 9);
+  addLine(`• Emoções: Cuidar das necessidades da sua Lua em ${moonSign} será essencial.`, 5, 9);
+  addLine(`• Imagem: Seu Ascendente em ${ascSign} atrairá novas oportunidades.`, 5, 9);
+  yPos += 8;
+
   doc.setFillColor(139, 92, 246);
-  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 40, 5, 5, 'F');
+  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 25, 3, 3, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  centerText('➡️ Acesse a Previsão 2026 completa no site para detalhes!', yPos + 15, 10);
+  doc.setTextColor(0, 0, 0);
+  yPos += 35;
+
+  // ========== VOCATIONAL SUMMARY ==========
+  doc.setFontSize(14);
+  doc.setTextColor(34, 139, 34);
+  doc.text('💼 MAPA VOCACIONAL - RESUMO', margin, yPos);
+  doc.setTextColor(0, 0, 0);
+  yPos += 12;
+
+  const mcSign = chartData.midheaven.sign;
+  const house6Sign = signs[Math.floor(((chartData.houses[5] % 360) + 360) % 360 / 30)];
+  const house2Sign = signs[Math.floor(((chartData.houses[1] % 360) + 360) % 360 / 30)];
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Meio do Céu em ${mcSign}`, margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  yPos += 6;
+  addLine('Indica sua vocação e como deseja ser reconhecido profissionalmente.', 5, 9);
+  yPos += 6;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Casa 6 em ${house6Sign}`, margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  yPos += 6;
+  addLine('Mostra como você lida com rotina de trabalho e ambiente profissional.', 5, 9);
+  yPos += 6;
+
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Casa 2 em ${house2Sign}`, margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  yPos += 6;
+  addLine('Revela como você ganha dinheiro e seus valores relacionados ao trabalho.', 5, 9);
+  yPos += 10;
+
+  doc.setFillColor(34, 139, 34);
+  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 25, 3, 3, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  centerText('➡️ Acesse o Mapa Profissional e Vocacional no site!', yPos + 15, 10);
+  doc.setTextColor(0, 0, 0);
+  yPos += 40;
+
+  // CTA for premium
+  doc.setFillColor(139, 92, 246);
+  doc.roundedRect(margin, yPos, pageWidth - margin * 2, 45, 5, 5, 'F');
   
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  centerText('Quer interpretações profundas?', yPos + 15, 12);
+  centerText('🌟 Quer interpretações profundas?', yPos + 12, 12);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   centerText('Adquira o Mapa Astral Completo Premium e receba', yPos + 25, 10);
-  centerText('análises detalhadas de todas as posições do seu mapa!', yPos + 32, 10);
+  centerText('análises detalhadas de todas as posições do seu mapa,', yPos + 33, 10);
+  centerText('previsão 2026 completa e mapa vocacional!', yPos + 41, 10);
 
-  yPos += 55;
+  yPos += 60;
   doc.setTextColor(128, 128, 128);
   centerText('✨ Gerado por Horóscopo da Gabi ✨', yPos, 11);
   yPos += 6;
