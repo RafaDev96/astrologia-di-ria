@@ -330,6 +330,74 @@ export async function generateChartPDF({
     }
   }
 
+  // ========== ANNUAL FORECAST 2026 SECTION ==========
+  doc.addPage();
+  yPos = 20;
+  
+  doc.setFillColor(30, 27, 75);
+  doc.rect(0, 0, pageWidth, 45, 'F');
+  doc.setTextColor(255, 215, 0);
+  centerText('🔮 PREVISÃO ANUAL 2026', 18, 18);
+  doc.setTextColor(255, 255, 255);
+  centerText('Tendências e oportunidades para o seu ano', 32, 11);
+  doc.setTextColor(0, 0, 0);
+  yPos = 55;
+
+  addSubSection('📅 VISÃO GERAL PARA 2026');
+  addLine('Com base nas posições do seu mapa natal, 2026 traz oportunidades de crescimento e transformação. Os trânsitos planetários deste ano ativam áreas específicas da sua vida.', 5, 9);
+  yPos += 5;
+
+  addSubSection('💫 ÁREAS EM DESTAQUE');
+  addLine(`• Sol em ${sunSign}: Foco em autoexpressão e propósito de vida. Ano para brilhar e assumir liderança.`, 5, 9);
+  addLine(`• Lua em ${moonSign}: Necessidade de cuidar das emoções e nutrir relacionamentos próximos.`, 5, 9);
+  addLine(`• Ascendente ${ascSign}: Novos começos e oportunidades de reinvenção pessoal.`, 5, 9);
+  addLine(`• Meio do Céu ${mcSign}: Direcionamento de carreira e reconhecimento profissional.`, 5, 9);
+  yPos += 5;
+
+  addSubSection('🌟 RECOMENDAÇÕES PARA O ANO');
+  addLine('1. Aproveite os períodos de Lua Nova para iniciar novos projetos.', 5, 9);
+  addLine('2. Durante Mercúrio retrógrado, revise planos e evite decisões precipitadas.', 5, 9);
+  addLine('3. Cultive as qualidades do seu elemento dominante para manter equilíbrio.', 5, 9);
+  addLine('4. Use as tensões (quadraturas) como catalisadores de mudança positiva.', 5, 9);
+  yPos += 5;
+
+  addLine('➡️ Para uma previsão detalhada e personalizada, acesse sua Previsão 2026 completa no site!', 5, 10);
+
+  // ========== VOCATIONAL/CAREER SECTION ==========
+  yPos += 15;
+  
+  doc.setFillColor(34, 139, 34);
+  doc.rect(0, yPos - 5, pageWidth, 35, 'F');
+  doc.setTextColor(255, 255, 255);
+  yPos += 10;
+  centerText('💼 MAPA PROFISSIONAL E VOCACIONAL', yPos, 14);
+  yPos += 12;
+  centerText('Tendências de carreira baseadas no seu mapa natal', yPos, 10);
+  doc.setTextColor(0, 0, 0);
+  yPos += 20;
+
+  addSubSection('🏠 CASA 6 - TRABALHO E ROTINA');
+  const house6Sign = signs[Math.floor(((chartData.houses[5] % 360) + 360) % 360 / 30)];
+  addLine(`Com a cúspide da Casa 6 em ${house6Sign}, você tende a funcionar melhor em ambientes de trabalho que valorizam ${house6Sign === 'Áries' ? 'ação rápida e autonomia' : house6Sign === 'Touro' ? 'estabilidade e conforto' : house6Sign === 'Gêmeos' ? 'comunicação e variedade' : house6Sign === 'Câncer' ? 'acolhimento e cuidado' : house6Sign === 'Leão' ? 'reconhecimento e criatividade' : house6Sign === 'Virgem' ? 'organização e detalhes' : house6Sign === 'Libra' ? 'harmonia e parcerias' : house6Sign === 'Escorpião' ? 'profundidade e transformação' : house6Sign === 'Sagitário' ? 'liberdade e expansão' : house6Sign === 'Capricórnio' ? 'estrutura e metas claras' : house6Sign === 'Aquário' ? 'inovação e independência' : 'intuição e fluidez'}.`, 5, 9);
+  yPos += 3;
+
+  addSubSection('⭐ CASA 10 - CARREIRA E VOCAÇÃO');
+  addLine(`Com o Meio do Céu em ${mcSign}, sua vocação natural está ligada a ${mcSignInterp?.essence || 'realizações profissionais que expressem sua essência'}. Busque carreiras onde possa aplicar essas qualidades.`, 5, 9);
+  yPos += 3;
+
+  addSubSection('💰 CASA 2 - DINHEIRO E VALORES');
+  const house2Sign = signs[Math.floor(((chartData.houses[1] % 360) + 360) % 360 / 30)];
+  addLine(`A Casa 2 em ${house2Sign} indica que você valoriza e ganha dinheiro através de ${house2Sign === 'Áries' ? 'iniciativas próprias e pioneirismo' : house2Sign === 'Touro' ? 'segurança material e talentos artísticos' : house2Sign === 'Gêmeos' ? 'comunicação e versatilidade' : house2Sign === 'Câncer' ? 'cuidado com os outros e intuição' : house2Sign === 'Leão' ? 'criatividade e liderança' : house2Sign === 'Virgem' ? 'serviço e atenção aos detalhes' : house2Sign === 'Libra' ? 'parcerias e senso estético' : house2Sign === 'Escorpião' ? 'recursos compartilhados e pesquisa' : house2Sign === 'Sagitário' ? 'ensino e aventuras' : house2Sign === 'Capricórnio' ? 'disciplina e autoridade' : house2Sign === 'Aquário' ? 'inovação e tecnologia' : 'artes e intuição'}.`, 5, 9);
+  yPos += 5;
+
+  addSubSection('🎯 SUGESTÕES PROFISSIONAIS');
+  addLine('• Considere carreiras que combinem as energias do seu Sol, Meio do Céu e Casa 6.', 5, 9);
+  addLine('• Seus talentos naturais estão ligados ao elemento dominante do seu mapa.', 5, 9);
+  addLine('• Evite ambientes que contradigam fortemente as necessidades da sua Lua.', 5, 9);
+  yPos += 5;
+
+  addLine('➡️ Para uma análise vocacional completa, acesse o Mapa Profissional e Vocacional no site!', 5, 10);
+
   // ========== FINAL PAGE - GUIDANCE ==========
   doc.addPage();
   yPos = 20;
