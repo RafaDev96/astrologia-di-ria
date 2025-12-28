@@ -10,7 +10,7 @@ import { calculateBirthChart, ChartData, BirthData } from '@/utils/astroCalculat
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Download, Share2, Star, RotateCcw, Lock, Sparkles, Briefcase } from 'lucide-react';
+import { Download, Star, RotateCcw, Lock, Sparkles, Briefcase } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -236,43 +236,6 @@ export default function BirthChartResult() {
     }
   };
 
-  const handleShare = async () => {
-    // Get birth data from session storage to create shareable link
-    const storedData = sessionStorage.getItem('birthChartData');
-    if (!storedData) {
-      toast.error('Dados do mapa não encontrados');
-      return;
-    }
-
-    try {
-      const parsed = JSON.parse(storedData);
-      // Create URL with encoded birth data
-      const shareData = {
-        n: parsed.name,
-        d: parsed.date,
-        t: parsed.time,
-        c: parsed.city,
-        lat: parsed.latitude,
-        lng: parsed.longitude,
-      };
-      const encodedData = btoa(encodeURIComponent(JSON.stringify(shareData)));
-      const shareUrl = `${window.location.origin}/mapa-astral/resultado?data=${encodedData}`;
-
-      if (navigator.share) {
-        await navigator.share({
-          title: `Mapa Astral de ${birthInfo?.name}`,
-          text: `Confira meu mapa astral completo no Horoscopo da Gabi!`,
-          url: shareUrl,
-        });
-      } else {
-        await navigator.clipboard.writeText(shareUrl);
-        toast.success('Link copiado!');
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-      toast.error('Erro ao compartilhar');
-    }
-  };
 
   if (!chartData || !birthInfo || isVerifying) {
     return (
@@ -331,14 +294,6 @@ export default function BirthChartResult() {
                 >
                   <RotateCcw className="w-4 h-4 mr-2" />
                   Novo Mapa
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={handleShare}
-                  className="border-primary/30 hover:bg-primary/10"
-                >
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Compartilhar
                 </Button>
                 <Button 
                   variant="outline" 
